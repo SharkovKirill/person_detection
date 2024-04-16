@@ -3,8 +3,8 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import random
 
-dir_path_train = "./Pascal VOC 2012.v1-raw.yolov8_prepared/train/"
-dir_path_valid = "./Pascal VOC 2012.v1-raw.yolov8_prepared/valid/"
+dir_path_train = "./Pascal-VOC-2012-1/train/"
+dir_path_valid = "./Pascal-VOC-2012-1/valid/"
 
 
 def show_bb_yolo(
@@ -15,6 +15,7 @@ def show_bb_yolo(
     shuffle: bool = True,
     data_type: str = "train",
     figsize=(40, 20),
+    pictures_type: str = ".jpg"
 ):
     n_pictures_to_show = rows * cols
     figure, ax = plt.subplots(nrows=rows, ncols=cols, figsize=figsize)
@@ -25,7 +26,7 @@ def show_bb_yolo(
         txt_path = dir_path_for_im_and_labels + f"labels/{file_name_txt}"
         img_path = (
             dir_path_for_im_and_labels
-            + f'images/{file_name_txt.rstrip(".txt") + ".jpg"}'
+            + f'images/{file_name_txt.rstrip(".txt") + pictures_type}'
         )
         print(i + 1, txt_path)
         with open(txt_path, "r") as txt_file:
@@ -57,27 +58,6 @@ def show_bb_yolo(
     plt.savefig(
         f"bbox_images_examples/{dataset_name}_{data_type}_bboxes_example_{n_pictures_to_show}.jpg"
     )
-
-
-show_bb_yolo(
-    "VOC",
-    dir_path_train,
-    cols=5,
-    rows=2,
-    shuffle=True,
-    data_type="train",
-    figsize=(40, 20),
-)
-
-show_bb_yolo(
-    "VOC",
-    dir_path_valid,
-    cols=5,
-    rows=2,
-    shuffle=True,
-    data_type="valid",
-    figsize=(40, 20),
-)
 
 
 def save_hists(
@@ -116,5 +96,5 @@ def save_hists(
     plt.savefig(f"hists_datasets/{dataset_name}_hist_count_{data_type}_.jpg")
 
 
-save_hists("VOC", dir_path_train, "train", figsize=(15, 6))
-save_hists("VOC", dir_path_valid, "valid", figsize=(15, 6))
+# 
+# save_hists("VOC", dir_path_valid, "valid", figsize=(15, 6))
