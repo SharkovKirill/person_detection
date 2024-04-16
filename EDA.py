@@ -8,7 +8,7 @@ show_bb_yolo(
     shuffle=True,
     data_type="train",
     figsize=(40, 20),
-    pictures_type=".png"
+    pictures_type=".png",
 )
 
 show_bb_yolo(
