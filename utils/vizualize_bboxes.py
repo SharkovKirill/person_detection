@@ -32,9 +32,13 @@ def show_bb_yolo(
         with open(txt_path, "r") as txt_file:
             txt_info = txt_file.read().split("\n")
         image = plt.imread(img_path)
-        height, width, channels = image.shape  # height - высота, width - ширина
-
-        ax.ravel()[i].imshow(image)
+        if len(image.shape)==3:
+            height, width, channels = image.shape  # height - высота, width - ширина
+            ax.ravel()[i].imshow(image)
+        elif len(image.shape)==2:
+            height, width = image.shape
+            ax.ravel()[i].imshow(image, cmap='grey')
+        
         ax.ravel()[i].set_axis_off()
 
         for bb in txt_info:
