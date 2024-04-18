@@ -58,10 +58,10 @@ def show_bb_yolo(
 
     plt.tight_layout()
     plt.title("dfgdf")
-    plt.show()
     plt.savefig(
         f"bbox_images_examples/{dataset_name}_{data_type}_bboxes_example_{n_pictures_to_show}.jpg"
     )
+    plt.show()
 
 
 def save_hists(
