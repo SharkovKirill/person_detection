@@ -57,7 +57,6 @@ def show_bb_yolo(
             ax.ravel()[i].add_patch(rect)
 
     plt.tight_layout()
-    plt.title("dfgdf")
     plt.savefig(
         f"bbox_images_examples/{dataset_name}_{data_type}_bboxes_example_{n_pictures_to_show}.jpg"
     )
