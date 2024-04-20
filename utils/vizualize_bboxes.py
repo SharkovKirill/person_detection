@@ -19,14 +19,15 @@ def show_bb_yolo(
 ):
     n_pictures_to_show = rows * cols
     figure, ax = plt.subplots(nrows=rows, ncols=cols, figsize=figsize)
-    labels_path = os.listdir(dir_path_for_im_and_labels + "labels/")
+    labels_path = os.listdir(os.path.join(dir_path_for_im_and_labels, "labels"))
     if shuffle:
         random.shuffle(labels_path)
     for i, file_name_txt in enumerate(labels_path[:n_pictures_to_show]):
-        txt_path = dir_path_for_im_and_labels + f"labels/{file_name_txt}"
-        img_path = (
-            dir_path_for_im_and_labels
-            + f'images/{file_name_txt.rstrip(".txt") + pictures_type}'
+        txt_path = os.path.join(dir_path_for_im_and_labels, "labels", file_name_txt)
+        img_path = os.path.join(
+            dir_path_for_im_and_labels,
+            "images",
+            file_name_txt.rstrip(".txt") + pictures_type
         )
         print(i + 1, txt_path)
         with open(txt_path, "r") as txt_file:
@@ -69,12 +70,12 @@ def save_hists(
     data_type: str = "train",
     figsize=(40, 20),
 ):
-    labels_path = os.listdir(dir_path_for_im_and_labels + "labels/")
+    labels_path = os.listdir(os.path.join(dir_path_for_im_and_labels, "labels"))
     n_people_on_image = []
     w_relative_list = []
     h_relative_list = []
     for i, file_name_txt in enumerate(labels_path):
-        txt_path = dir_path_for_im_and_labels + f"labels/{file_name_txt}"
+        txt_path = os.path.join(dir_path_for_im_and_labels, "labels", file_name_txt)
         with open(txt_path, "r") as txt_file:
             txt_info = txt_file.read().split("\n")
             n_people_on_image.append(len(txt_info))
@@ -95,8 +96,8 @@ def save_hists(
     ax.ravel()[2].hist(w_relative_list, bins=20)
     ax.ravel()[2].set_title(f"Средняя относительная ширина человека")
 
-    plt.show()
     plt.savefig(f"hists_datasets/{dataset_name}_hist_count_{data_type}_.jpg")
+    plt.show()
 
 
 # 

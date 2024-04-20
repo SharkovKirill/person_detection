@@ -8,22 +8,30 @@ def load_local_env():
         load_dotenv(dotenv_path)
 
 
-def list_files_in_directory(directory):
-    files = []
+def list_files_in_directory(directory, storage_type = list):
+    files = storage_type()
+    if storage_type == list:
+        add_method = files.append
+    else:
+        add_method = files.add
     for filename in os.listdir(directory):
         if os.path.isfile(os.path.join(directory, filename)):
-            files.append(filename)
+            add_method(filename)
     return files
 
 
-def has_person_in_txt(ID_CLASSES_PERSON_BEFORE: tuple, file_names, dir_path: str):
-    file_names_with_person = []
+def has_person_in_txt(ID_CLASSES_PERSON_BEFORE: tuple, file_names, dir_path: str, storage_type = list):
+    file_names_with_person = storage_type()
+    if storage_type == list:
+        add_method = file_names_with_person.append
+    else:
+        add_method = file_names_with_person.add
     for file_name in file_names:
         file_path = dir_path + f"/{file_name}"
         with open(file_path, "r") as file:
             for line in file:
                 if line.startswith(ID_CLASSES_PERSON_BEFORE):
-                    file_names_with_person.append(file_name)
+                    add_method(file_name)
                     break
     return file_names_with_person
 
