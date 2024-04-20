@@ -1,67 +1,32 @@
+import os
+
 from utils.vizualize_bboxes import show_bb_yolo, save_hists
 
-show_bb_yolo(
-    "KITTI",
-    "./Kitti/train/",
-    cols=5,
-    rows=2,
-    shuffle=True,
-    data_type="train",
-    figsize=(40, 20),
-    pictures_type=".png",
+DATASETS = (
+    ("Kitti", ".png"),
+    ("Pascal-VOC-2012-1", ".jpg"),
+    ("coco-2017", ".jpg"),
+    ("WiderPerson-3", ".jpg"),
+    ("Construction-Site-Safety-30", ".jpg"),
+    ("open-images-v7", ".jpg")
 )
-save_hists("KITTI", "./Kitti/train/", "train", figsize=(15, 6))
 
+for dataset in DATASETS:
+    dataset_name, dataset_image_type = dataset
+    dataset_dir = os.path.join(os.getcwd(), dataset_name)
+    if not os.path.exists(dataset_dir):
+        continue
 
-for subset in ["train", "valid"]:
-    show_bb_yolo(
-        "VOC",
-        f"./Pascal-VOC-2012-1/{subset}/",
-        cols=5,
-        rows=2,
-        shuffle=True,
-        data_type=subset,
-        figsize=(40, 20),
-    )
-    save_hists("VOC", f"./Pascal-VOC-2012-1/{subset}/", subset, figsize=(15, 6))
-
-
-for subset in ["train", "valid"]:
-    show_bb_yolo(
-        "COCO",
-        f"./coco-2017/{subset}/",
-        cols=5,
-        rows=2,
-        shuffle=True,
-        data_type=subset,
-        figsize=(40, 20),
-    )
-    save_hists("COCO", f"./coco-2017/{subset}/", subset, figsize=(15, 6))
-
-
-# for subset in ["train", "valid", "test"]:
-#     show_bb_yolo(
-#         "WiderPerson",
-#         f"./WiderPerson-3/{subset}/",
-#         cols=5,
-#         rows=2,
-#         shuffle=True,
-#         data_type=subset,
-#         figsize=(40, 20),
-#     )
-#     save_hists("WiderPerson", f"./WiderPerson-3/{subset}/", subset, figsize=(15, 6))
-
-
-for subset in ["train", "valid", "test"]:
-    show_bb_yolo(
-        "open-images-v7",
-        f"./open-images-v7/{subset}/",
-        cols=5,
-        rows=2,
-        shuffle=True,
-        data_type=subset,
-        figsize=(40, 20),
-    )
-    save_hists(
-        "open-images-v7", f"./open-images-v7/{subset}/", subset, figsize=(15, 6)
-    )
+    splits = [ name for name in os.listdir(dataset_dir) if os.path.isdir(os.path.join(dataset_dir, name)) ]
+    for split in splits:
+        show_bb_yolo(
+            dataset_name,
+            os.path.join(os.getcwd(), dataset_name, split),
+            cols=5,
+            rows=2,
+            shuffle=True,
+            data_type=split,
+            figsize=(40, 20),
+            pictures_type=dataset_image_type,
+        )
+        save_hists(dataset_name, os.path.join(os.getcwd(), dataset_name, split), split, figsize=(15, 6))
