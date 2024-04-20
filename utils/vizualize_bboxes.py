@@ -96,8 +96,8 @@ def save_hists(
     ax.ravel()[2].hist(w_relative_list, bins=20)
     ax.ravel()[2].set_title(f"Средняя относительная ширина человека")
 
-    plt.show()
     plt.savefig(f"hists_datasets/{dataset_name}_hist_count_{data_type}_.jpg")
+    plt.show()
 
 
 # 
