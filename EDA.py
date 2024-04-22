@@ -8,7 +8,8 @@ DATASETS = (
     ("coco-2017", ".jpg"),
     ("WiderPerson-3", ".jpg"),
     ("Construction-Site-Safety-30", ".jpg"),
-    ("open-images-v7", ".jpg")
+    ("open-images-v7", ".jpg"),
+    ("Person-Detection-Fisheye-1", ".jpg")
 )
 
 for dataset in DATASETS:
