@@ -6,7 +6,7 @@ DATASETS = (
     ("Kitti", ".png"),
     ("Pascal-VOC-2012-1", ".jpg"),
     ("coco-2017", ".jpg"),
-    ("WiderPerson-3", ".jpg"),
+    ("person-detetion-1", ".jpg"),
     ("Construction-Site-Safety-30", ".jpg"),
     ("open-images-v7", ".jpg"),
     ("Person-Detection-Fisheye-1", ".jpg")
@@ -30,4 +30,7 @@ for dataset in DATASETS:
             figsize=(40, 20),
             pictures_type=dataset_image_type,
         )
+        # bug with rendering inside the function
+        if dataset_name == "person-detetion-1":
+            continue
         save_hists(dataset_name, os.path.join(os.getcwd(), dataset_name, split), split, figsize=(15, 6))
