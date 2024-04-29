@@ -1,9 +1,9 @@
 # !pip install fiftyone
 # !pip install pycocotools
 
-import fiftyone as fo
-import fiftyone.zoo as foz
 from pycocotools.coco import COCO
+from typing import List
+
 import os
 import shutil
 import yaml
@@ -13,17 +13,6 @@ ID_CLASS_PERSON_NEW = 0
 IMAGES_TYPE = ".jpg"
 SUBSETS_TO_PREPARE = ["train", "validation"]
 SUBSETS_TO_RENAME = ["train", "validation", "test"]
-
-
-def download_fiftyone_COCO():
-    fo.config.dataset_zoo_dir = "./"
-
-    dataset = foz.load_zoo_dataset(
-        "coco-2017",
-        label_types=["detections"],  # all splits
-        classes=["person"],
-        only_matching=True,
-    )
 
 
 def yolov8_from_coco(height, width, x, y, w_before, h_before):
@@ -82,19 +71,14 @@ def prepare_fiftyone_COCO(
         yaml.dump(data, file, default_flow_style=False)
 
 
-def download_prepare(
-    ID_CLASS_PERSON_NEW, IMAGES_TYPE, SUBSETS_TO_PREPARE, SUBSETS_TO_RENAME
+def transform_coco(
+    ID_CLASS_PERSON_NEW: int = ID_CLASS_PERSON_NEW,
+    IMAGES_TYPE: str = IMAGES_TYPE,
+    SUBSETS_TO_PREPARE: List[str] = SUBSETS_TO_PREPARE,
+    SUBSETS_TO_RENAME: List[str] = SUBSETS_TO_RENAME
 ):
-    print("fiftyone COCO download started")
-    # download_fiftyone_COCO()
-    print("fiftyone COCO download finished")
     print("fiftyone COCO preparing started")
     prepare_fiftyone_COCO(
         ID_CLASS_PERSON_NEW, IMAGES_TYPE, SUBSETS_TO_PREPARE, SUBSETS_TO_RENAME
     )
     print("fiftyone COCO preparing finished")
-
-
-download_prepare(
-    ID_CLASS_PERSON_NEW, IMAGES_TYPE, SUBSETS_TO_PREPARE, SUBSETS_TO_RENAME
-)

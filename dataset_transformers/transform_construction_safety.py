@@ -1,10 +1,6 @@
-import os
 import yaml
 
-from roboflow import Roboflow
-
 from utils.only_people_from_yolo import (
-    load_local_env,
     list_files_in_directory,
     has_person_in_txt,
     del_txt_not_in_list,
@@ -14,12 +10,6 @@ from utils.only_people_from_yolo import (
 
 PERSON_ID = ("8",)
 SPLITS = ["test", "train", "valid"]
-
-def download_dataset(api_key: str) -> None:
-    rf = Roboflow(api_key=api_key)
-    project = rf.workspace("roboflow-universe-projects").project("construction-site-safety")
-    version = project.version(30)
-    dataset = version.download("yolov8")
 
 def prepare_dataset() -> None:
     for split in SPLITS:
@@ -45,10 +35,5 @@ def prepare_dataset() -> None:
         with open("./Construction-Site-Safety-30/data.yaml", "w") as file:
             yaml.dump(data, file, default_flow_style=False)
 
-def download_prepare_construction_safety() -> None:
-    load_local_env()
-    download_dataset(os.getenv("API_KEY_ROBOFLOW"))
-
+def transform_construction_safety() -> None:
     prepare_dataset()
-
-download_prepare_construction_safety()
