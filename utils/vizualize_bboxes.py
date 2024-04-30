@@ -15,7 +15,7 @@ def show_bb_yolo(
     shuffle: bool = True,
     data_type: str = "train",
     figsize=(40, 20),
-    pictures_type: str = ".jpg"
+    pictures_type: str = ".jpg",
 ):
     n_pictures_to_show = rows * cols
     figure, ax = plt.subplots(nrows=rows, ncols=cols, figsize=figsize)
@@ -27,19 +27,19 @@ def show_bb_yolo(
         img_path = os.path.join(
             dir_path_for_im_and_labels,
             "images",
-            file_name_txt.rstrip(".txt") + pictures_type
+            file_name_txt.rstrip(".txt") + pictures_type,
         )
         print(i + 1, txt_path)
         with open(txt_path, "r") as txt_file:
             txt_info = txt_file.read().split("\n")
         image = plt.imread(img_path)
-        if len(image.shape)==3:
+        if len(image.shape) == 3:
             height, width, channels = image.shape  # height - высота, width - ширина
             ax.ravel()[i].imshow(image)
-        elif len(image.shape)==2:
+        elif len(image.shape) == 2:
             height, width = image.shape
-            ax.ravel()[i].imshow(image, cmap='grey')
-        
+            ax.ravel()[i].imshow(image, cmap="grey")
+
         ax.ravel()[i].set_axis_off()
 
         for bb in txt_info:
@@ -100,5 +100,37 @@ def save_hists(
     plt.show()
 
 
-# 
-# save_hists("VOC", dir_path_valid, "valid", figsize=(15, 6))
+def show_old_and_new_bb(
+    old_image: np.ndarray,
+    new_image: np.ndarray,
+    old_bb_list: List[List[float]],
+    new_bb_list: List[List[float]],
+):
+    print(old_image.shape, new_image.shape)
+    figure, ax = plt.subplots(nrows=1, ncols=2, figsize=(40, 20))
+    ax.ravel()[0].set_axis_off()
+    ax.ravel()[1].set_axis_off()
+    if len(image.shape) == 3:
+        height, width, channels = old_image.shape  # height - высота, width - ширина
+        ax.ravel()[0].imshow(old_image)
+        ax.ravel()[1].imshow(new_image)
+    elif len(image.shape) == 2:
+        height, width = old_image.shape
+        ax.ravel()[0].imshow(old_image, cmap="grey")
+        ax.ravel()[1].imshow(new_image, cmap="grey")
+
+    for i, bb_list in zip([0, 1], [old_bb_list, new_bb_list]):
+        for bb in bb_list:
+            x_relative, y_relative, w_relative, h_relative, _ = bb
+            x_center = int(x_relative * width)
+            y_center = int(y_relative * height)
+            w = int(w_relative * width)
+            h = int(h_relative * height)
+            x = x_center - w / 2
+            y = y_center - h / 2
+            rect = patches.Rectangle(
+                (x, y), w, h, linewidth=2, edgecolor="g", facecolor="none"
+            )
+            ax.ravel()[i].add_patch(rect)
+
+    plt.show()
