@@ -1,10 +1,7 @@
 # !pip install roboflow
 # !pip install python-dotenv
 
-import os
 import yaml
-from dotenv import load_dotenv
-from roboflow import Roboflow
 
 from utils.only_people_from_yolo import (
     del_images_not_in_list_txt,
@@ -12,17 +9,10 @@ from utils.only_people_from_yolo import (
     has_person_in_txt,
     list_files_in_directory,
     relabel_and_del_useless_classes_from_yolo8,
-    load_local_env
 )
 
 ID_CLASSES_PERSON_BEFORE = ('14')
 ID_CLASS_PERSON_NEW = 0
-
-
-def download_yolo8_VOC(api_key):
-    rf = Roboflow(api_key=api_key)
-    project = rf.workspace("jacob-solawetz").project("pascal-voc-2012")
-    dataset = project.version(1).download("yolov8")
 
 
 def prepare_VOC(
@@ -70,12 +60,10 @@ def prepare_VOC(
         yaml.dump(data, file, default_flow_style=False)
 
 
-def download_prepare(ID_CLASSES_PERSON_BEFORE, ID_CLASS_PERSON_NEW):
-    load_local_env()
-    API_KEY_ROBOFLOW = os.getenv("API_KEY_ROBOFLOW")
-    print("PASCAL VOC download started")
-    download_yolo8_VOC(API_KEY_ROBOFLOW)
-    print("PASCAL VOC download finished")
+def transform_pascal_voc(
+    ID_CLASSES_PERSON_BEFORE=ID_CLASSES_PERSON_BEFORE,
+    ID_CLASS_PERSON_NEW=ID_CLASS_PERSON_NEW
+):
     directory_train_labels = "./Pascal-VOC-2012-1/train/labels"
     directory_train_images = "./Pascal-VOC-2012-1/train/images"
     directory_valid_labels = "./Pascal-VOC-2012-1/valid/labels"
@@ -90,6 +78,3 @@ def download_prepare(ID_CLASSES_PERSON_BEFORE, ID_CLASS_PERSON_NEW):
         directory_valid_images,
     )
     print("PASCAL VOC preparing finished")
-
-
-download_prepare(ID_CLASSES_PERSON_BEFORE, ID_CLASS_PERSON_NEW)

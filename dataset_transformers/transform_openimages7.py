@@ -1,5 +1,5 @@
-import fiftyone as fo
-import fiftyone.zoo as foz
+from typing import List
+
 import pandas as pd
 import os
 import shutil
@@ -9,20 +9,7 @@ from utils.only_people_from_yolo import list_files_in_directory
 ID_CLASS_PERSON_NEW = 0
 SUBSETS_TO_PREPARE = ["train", "validation", "test"]
 SUBSETS_TO_RENAME = ["train", "validation", "test"]
-MAX_SAMPLES = 50  # 10000000000
 IMAGES_TYPE = ".jpg"
-
-
-def download_fiftyone_open_images_v7():
-    fo.config.dataset_zoo_dir = "./"
-
-    dataset = foz.load_zoo_dataset(
-        "open-images-v7",
-        label_types=["detections"],  # all splits
-        classes=["Man", "Woman", "Person"],
-        only_matching=True,
-        max_samples=MAX_SAMPLES,
-    )
 
 
 def prepare_fiftyone_open_images_v7(
@@ -82,19 +69,14 @@ def prepare_fiftyone_open_images_v7(
         yaml.dump(data, file, default_flow_style=False)
 
 
-def download_prepare_openimagesv7(
-    ID_CLASS_PERSON_NEW, IMAGES_TYPE, SUBSETS_TO_PREPARE, SUBSETS_TO_RENAME
+def transform_openimages7(
+    ID_CLASS_PERSON_NEW: int = ID_CLASS_PERSON_NEW,
+    IMAGES_TYPE: str = IMAGES_TYPE,
+    SUBSETS_TO_PREPARE: List[str] = SUBSETS_TO_PREPARE,
+    SUBSETS_TO_RENAME: List[str] = SUBSETS_TO_RENAME
 ):
-    print("open-images-v7 download started")
-    download_fiftyone_open_images_v7()
-    print("open-images-v7 download finished")
     print("open-images-v7 preparing started")
     prepare_fiftyone_open_images_v7(
         ID_CLASS_PERSON_NEW, IMAGES_TYPE, SUBSETS_TO_PREPARE, SUBSETS_TO_RENAME
     )
     print("open-images-v7 preparing finished")
-
-
-download_prepare_openimagesv7(
-    ID_CLASS_PERSON_NEW, IMAGES_TYPE, SUBSETS_TO_PREPARE, SUBSETS_TO_RENAME
-)

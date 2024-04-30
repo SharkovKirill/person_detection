@@ -95,13 +95,17 @@ def prepare_pytorch_KITTI(
     with open('./Kitti/data.yaml', 'w') as file:
         yaml.dump(data, file, default_flow_style=False)
     
-def download_prepare(ID_CLASSES_PERSON_BEFORE, ID_CLASS_PERSON_NEW):
-    print("pytorch KITTI download started")
-    # download_pytorch_KITTI(API_KEY_ROBOFLOW)
-    print("pytorch KITTI download finished")
+def transform_kitti(
+    ID_CLASSES_PERSON_BEFORE=ID_CLASSES_PERSON_BEFORE,
+    ID_CLASS_PERSON_NEW=ID_CLASS_PERSON_NEW
+):
     directory_train_labels = "./Kitti/raw/training/label_2"
     directory_train_images = "./Kitti/raw/training/image_2"
 
+    print("Importing PyTorch KITTI")
+    download_pytorch_KITTI()
+
+    print("pytorch KITTI preparing started")
     print("pytorch KITTI preparing started")
 
     prepare_pytorch_KITTI(
@@ -111,6 +115,3 @@ def download_prepare(ID_CLASSES_PERSON_BEFORE, ID_CLASS_PERSON_NEW):
         directory_train_images,
     )
     print("pytorch KITTI preparing finished")
-
-
-download_prepare(ID_CLASSES_PERSON_BEFORE, ID_CLASS_PERSON_NEW)
