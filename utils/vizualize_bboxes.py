@@ -101,27 +101,44 @@ def save_hists(
 
 
 def show_old_and_new_bb(
-    old_image: np.ndarray,
-    new_image: np.ndarray,
-    old_bb_list: List[List[float]],
-    new_bb_list: List[List[float]],
+    one_image_old_path: str,
+    one_image_new_path: str,
+    one_label_old_path: str,
+    one_label_new_path: str,
+    figsize: tuple,
+    title: str = 'Before -> after'
 ):
-    print(old_image.shape, new_image.shape)
-    figure, ax = plt.subplots(nrows=1, ncols=2, figsize=(40, 20))
+    old_image = plt.imread(one_image_old_path)
+    with open(one_label_old_path, "r") as bb_file:
+        old_lines_boxes = bb_file.read().split("\n")
+    old_bb_list = []  # list of lists
+    for one_box in old_lines_boxes:
+        one_box_list = list(map(float, one_box.split(" ")))
+        old_bb_list.append(one_box_list)
+
+    new_image = plt.imread(one_image_new_path)
+    with open(one_label_new_path, "r") as bb_file:
+        new_lines_boxes = bb_file.read().split("\n")
+    new_bb_list = []  # list of lists
+    for one_box in new_lines_boxes:
+        one_box_list = list(map(float, one_box.split(" ")))
+        new_bb_list.append(one_box_list)
+
+    figure, ax = plt.subplots(nrows=1, ncols=2, figsize=figsize)
     ax.ravel()[0].set_axis_off()
     ax.ravel()[1].set_axis_off()
-    if len(image.shape) == 3:
+    if len(old_image.shape) == 3:
         height, width, channels = old_image.shape  # height - высота, width - ширина
         ax.ravel()[0].imshow(old_image)
         ax.ravel()[1].imshow(new_image)
-    elif len(image.shape) == 2:
+    elif len(old_image.shape) == 2:
         height, width = old_image.shape
         ax.ravel()[0].imshow(old_image, cmap="grey")
         ax.ravel()[1].imshow(new_image, cmap="grey")
 
     for i, bb_list in zip([0, 1], [old_bb_list, new_bb_list]):
         for bb in bb_list:
-            x_relative, y_relative, w_relative, h_relative, _ = bb
+            _, x_relative, y_relative, w_relative, h_relative = bb
             x_center = int(x_relative * width)
             y_center = int(y_relative * height)
             w = int(w_relative * width)
@@ -129,8 +146,8 @@ def show_old_and_new_bb(
             x = x_center - w / 2
             y = y_center - h / 2
             rect = patches.Rectangle(
-                (x, y), w, h, linewidth=2, edgecolor="g", facecolor="none"
+                (x, y), w, h, linewidth=3, edgecolor="r", facecolor="none"
             )
             ax.ravel()[i].add_patch(rect)
-
+    figure.suptitle(title)
     plt.show()
