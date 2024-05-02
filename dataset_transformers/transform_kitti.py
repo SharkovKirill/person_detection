@@ -29,7 +29,12 @@ def relabel_and_del_useless_classes_from_pytorch_KITTI(
         txt_path = directory_train_labels + f"/{file_name}"
         img_path = directory_train_images + f'/{file_name.rstrip(".txt") + ".png"}'
         image = plt.imread(img_path)
-        height, width, channels = image.shape
+        
+        if len(old_image.shape) == 3:
+            height, width, _ = old_image.shape 
+        elif len(old_image.shape) == 2:
+            height, width = old_image.shape
+            
         correct_lines = []
         with open(txt_path, "r") as file:
             all_lines = file.read().split("\n")
