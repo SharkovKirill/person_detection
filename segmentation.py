@@ -28,15 +28,6 @@ sam = sam_model_registry[MODEL_TYPE](checkpoint=CHECKPOINT_PATH).to(device=DEVIC
 
 
 def bboxes_SAM_from_yolo(x_center, y_center, w, h, img_w, img_h):
-    print(
-        "Пришли на вход в bboxes_SAM_from_yolo\n",
-        x_center,
-        y_center,
-        w,
-        h,
-        img_w,
-        img_h,
-    )
     x1 = (x_center - w / 2) * img_w
     y1 = (y_center - h / 2) * img_h
     x2 = (x_center + w / 2) * img_w
@@ -53,7 +44,6 @@ def boxes_sam_one_pic_io(one_image_path: str, one_label_path: str):
         height, width = image.shape
     with open(one_label_path, "r") as bb_file:
         boxes = bb_file.read().split("\n")
-    print("Просто boxes", boxes)
     default_boxes = []  # list of lists
     for one_box in boxes:
         box_list = list(map(float, one_box.split(" ")))
@@ -118,7 +108,6 @@ def segment_one_image_with_options(
         mask_predictor = SamPredictor(sam)
         mask_predictor.set_image(image_rgb)
         bboxes_one_image = boxes_sam_one_pic_io(one_image_path, one_label_path)
-        print(bboxes_one_image, "bboxes_one_image")
 
     if show_plots:
         masks_all = np.zeros((image_rgb.shape[0], image_rgb.shape[1]))
