@@ -14,7 +14,7 @@ DATASETS = (
 
 for dataset in DATASETS:
     dataset_name, dataset_image_type = dataset
-    dataset_dir = os.path.join(os.getcwd(), dataset_name)
+    dataset_dir = os.path.join(os.getcwd(), "datasets", dataset_name)
     if not os.path.exists(dataset_dir):
         continue
 
@@ -22,7 +22,7 @@ for dataset in DATASETS:
     for split in splits:
         show_bb_yolo(
             dataset_name,
-            os.path.join(os.getcwd(), dataset_name, split),
+            os.path.join(dataset_dir, split),
             cols=5,
             rows=2,
             shuffle=True,
@@ -33,4 +33,4 @@ for dataset in DATASETS:
         # bug with rendering inside the function
         if dataset_name == "WiderPerson":
             continue
-        save_hists(dataset_name, os.path.join(os.getcwd(), dataset_name, split), split, figsize=(15, 6))
+        save_hists(dataset_name, os.path.join(dataset_dir, split), split, figsize=(15, 6))
