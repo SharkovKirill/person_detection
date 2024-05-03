@@ -1,6 +1,7 @@
 # !pip install roboflow
 # !pip install python-dotenv
 
+import os
 import yaml
 
 from utils.only_people_from_yolo import (
@@ -16,6 +17,7 @@ ID_CLASS_PERSON_NEW = 0
 
 
 def prepare_VOC(
+    datasets_dir_path,
     ID_CLASSES_PERSON_BEFORE,
     ID_CLASS_PERSON_NEW,
     directory_train_labels,
@@ -55,21 +57,25 @@ def prepare_VOC(
         'names': ['person'],
         'nc': 1,
         'train': 'Pascal-VOC-2012-1/train/images',
+        'valid': 'Pascal-VOC-2012-1/valid/images',
     }
-    with open('./Pascal-VOC-2012-1/data.yaml', 'w') as file:
+    with open(os.path.join(datasets_dir_path, "Pascal-VOC-2012-1", "data.yaml"), 'w') as file:
         yaml.dump(data, file, default_flow_style=False)
 
 
 def transform_pascal_voc(
+    datasets_dir_path: str,
     ID_CLASSES_PERSON_BEFORE=ID_CLASSES_PERSON_BEFORE,
     ID_CLASS_PERSON_NEW=ID_CLASS_PERSON_NEW
 ):
-    directory_train_labels = "./Pascal-VOC-2012-1/train/labels"
-    directory_train_images = "./Pascal-VOC-2012-1/train/images"
-    directory_valid_labels = "./Pascal-VOC-2012-1/valid/labels"
-    directory_valid_images = "./Pascal-VOC-2012-1/valid/images"
+    cwd = os.path.join(datasets_dir_path, "Pascal-VOC-2012-1")
+    directory_train_labels = os.path.join(cwd, "train", "labels")
+    directory_train_images = os.path.join(cwd, "train", "images")
+    directory_valid_labels = os.path.join(cwd, "valid", "labels")
+    directory_valid_images = os.path.join(cwd, "valid", "images")
     print("PASCAL VOC preparing started")
     prepare_VOC(
+        datasets_dir_path,
         ID_CLASSES_PERSON_BEFORE,
         ID_CLASS_PERSON_NEW,
         directory_train_labels,

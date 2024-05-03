@@ -13,12 +13,14 @@ IMAGES_TYPE = ".jpg"
 
 
 def prepare_fiftyone_open_images_v7(
-    ID_CLASS_PERSON_NEW, IMAGES_TYPE, SUBSETS_TO_PREPARE, SUBSETS_TO_RENAME
+    datasets_dir_path, ID_CLASS_PERSON_NEW, IMAGES_TYPE, SUBSETS_TO_PREPARE, SUBSETS_TO_RENAME
 ):
+    cwd = os.path.join(datasets_dir_path, "open-images-v7")
     for subset in SUBSETS_TO_PREPARE:
-        directory_subset_images = f"./open-images-v7/{subset}/data"
-        base_txt_path = f"./open-images-v7/{subset}/labels/"
-        df = pd.read_csv(f"./open-images-v7/{subset}/labels/detections.csv")
+        directory_subset_images = os.path.join(cwd, subset, "data")
+        base_txt_path = os.path.join(cwd, subset, "labels")
+        
+        df = pd.read_csv(os.path.join(base_txt_path, "detections.csv"))
         df = df[["ImageID", "LabelName", "XMin", "XMax", "YMin", "YMax"]]
         df = df[
             (df["LabelName"] == "/m/01g317")
@@ -49,15 +51,18 @@ def prepare_fiftyone_open_images_v7(
         )
         grouped = df.groupby("ImageID")["full_line"].apply(list)
         for file_name in file_names:
-            txt_path = base_txt_path + file_name + ".txt"
+            txt_path = os.path.join(base_txt_path, file_name + ".txt")
             with open(txt_path, "w") as file:
                 file.write("\n".join(grouped[file_name]))
-    os.remove("./open-images-v7/info.json")
+
+    os.remove(os.path.join(cwd, "info.json"))
+
     for subset in SUBSETS_TO_RENAME:
-        shutil.move(f"./open-images-v7/{subset}/data", f"./open-images-v7/{subset}/images")
-        shutil.rmtree(f"./open-images-v7/{subset}/metadata")
-        os.remove(f"./open-images-v7/{subset}/labels/detections.csv")
-    shutil.move(f"./open-images-v7/validation", f"./open-images-v7/valid")
+        shutil.move(os.path.join(cwd, subset, "data"), os.path.join(cwd, subset, "images"))
+        shutil.rmtree(os.path.join(cwd, subset, "metadata"))
+        os.remove(os.path.join(cwd, subset, "labels", "detections.csv"))
+
+    shutil.move(os.path.join(cwd, "validation"), os.path.join(cwd, "valid"))
     data = {
         "names": ["person"],
         "nc": 1,
@@ -65,11 +70,12 @@ def prepare_fiftyone_open_images_v7(
         "val": "open-images-v7/valid/images",
         "test": "open-images-v7/test/images",
     }
-    with open("./open-images-v7/data.yaml", "w") as file:
+    with open(os.path.join(cwd, "data.yaml"), "w") as file:
         yaml.dump(data, file, default_flow_style=False)
 
 
 def transform_openimages7(
+    datasets_dir_path: str,
     ID_CLASS_PERSON_NEW: int = ID_CLASS_PERSON_NEW,
     IMAGES_TYPE: str = IMAGES_TYPE,
     SUBSETS_TO_PREPARE: List[str] = SUBSETS_TO_PREPARE,
@@ -77,6 +83,6 @@ def transform_openimages7(
 ):
     print("open-images-v7 preparing started")
     prepare_fiftyone_open_images_v7(
-        ID_CLASS_PERSON_NEW, IMAGES_TYPE, SUBSETS_TO_PREPARE, SUBSETS_TO_RENAME
+        datasets_dir_path, ID_CLASS_PERSON_NEW, IMAGES_TYPE, SUBSETS_TO_PREPARE, SUBSETS_TO_RENAME
     )
     print("open-images-v7 preparing finished")
