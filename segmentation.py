@@ -1,4 +1,3 @@
-import os
 from typing import List
 
 import cv2
@@ -6,25 +5,17 @@ import matplotlib.pyplot as plt
 import numpy as np
 import supervision as sv
 import torch
-from segment_anything import SamAutomaticMaskGenerator, SamPredictor, sam_model_registry
+from segment_anything import SamPredictor, sam_model_registry
+from segment_anything.modeling import Sam
 
-from aug_datasets import save_augmented_copy_with_options
-from utils.vizualize_bboxes import show_old_and_new_bb
 
-# https://dl.fbaipublicfiles.com/segment_anything/sam_vit_l_0b3195.pth # vit_l # другие веса
-# https://dl.fbaipublicfiles.com/segment_anything/sam_vit_b_01ec64.pth # vit_b # другие веса
+def initialize_sam(sam_weights_path: str, sam_model_type: str):
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    sam = sam_model_registry[sam_model_type](checkpoint=sam_weights_path).to(
+        device=device
+    )
 
-# pip install git+https://github.com/facebookresearch/segment-anything.git
-# !mkdir -p models_weights
-# !wget -q https://dl.fbaipublicfiles.com/segment_anything/sam_vit_h_4b8939.pth -P models_weights # 2.4gb
-
-CHECKPOINT_PATH = "./models_weights/sam_vit_h_4b8939.pth"
-print(CHECKPOINT_PATH, "; exist:", os.path.isfile(CHECKPOINT_PATH))
-
-DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-MODEL_TYPE = "vit_h"
-
-sam = sam_model_registry[MODEL_TYPE](checkpoint=CHECKPOINT_PATH).to(device=DEVICE)
+    return sam
 
 
 def bboxes_SAM_from_yolo(x_center, y_center, w, h, img_w, img_h):
@@ -86,6 +77,7 @@ def segment_one_image_with_options(
     one_image_path: str,
     one_label_path: str,
     one_label_seg_path: str,
+    sam: Sam,
     image_rgb=None,
     correct_lines_float: List[List[float]] = None,
     figsize: tuple = None,
@@ -115,7 +107,7 @@ def segment_one_image_with_options(
     correct_new_boxes = []
 
     for one_bbox_aug in bboxes_one_image:
-        masks, scores, logits = mask_predictor.predict(
+        masks, _, _ = mask_predictor.predict(
             box=one_bbox_aug, multimask_output=True
         )
         if show_plots:
