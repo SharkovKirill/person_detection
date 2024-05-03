@@ -1,6 +1,6 @@
 #!/bin/bash
 
-GLOBAL_PIDS_ROBOFLOW=""
+GLOBAL_PIDS_TO_WAIT=""
 RESULT=0
 
 function create_env {
@@ -19,7 +19,7 @@ function make_dir {
 
 function download_dataset_roboflow {
     echo "Starting to download $1"
-    curl -s -o /dev/null -L $1 > roboflow.zip
+    curl -s -L $1 > roboflow.zip
     unzip roboflow.zip > /dev/null 2>&1
     rm roboflow.zip
     echo "End of download of $1"
@@ -58,6 +58,12 @@ fiftyone_dataset_args=(
     "detections person"
 )
 
+sam_weights=(
+    "https://dl.fbaipublicfiles.com/segment_anything/sam_vit_l_0b3195.pth"
+    "https://dl.fbaipublicfiles.com/segment_anything/sam_vit_b_01ec64.pth"
+    "https://dl.fbaipublicfiles.com/segment_anything/sam_vit_h_4b8939.pth"
+)
+
 function download_fiftyone {
     for (( i=0; i<${#fiftyone_dataset_names[@]}; i++ )); do
         download_dataset_fiftyone ${fiftyone_dataset_names[$i]} ${fiftyone_dataset_args[$i]}
@@ -70,17 +76,36 @@ function download_roboflow {
         pushd ${roboflow_dataset_names[i]} > /dev/null
 
         download_dataset_roboflow ${roboflow_dataset_links[$i]} &
-        GLOBAL_PIDS_ROBOFLOW="$GLOBAL_PIDS_ROBOFLOW $!"
+        GLOBAL_PIDS_TO_WAIT="$GLOBAL_PIDS_TO_WAIT $!"
         popd > /dev/null
     done
+}
+
+function download_sam_weights_async {
+    echo "Starting to download $1"
+    curl -s -O $1
+    echo "End of download of $1"
+}
+
+function download_sam_weights {
+    make_dir sam_weights
+    pushd sam_weights > /dev/null
+    for (( i=0; i<${#sam_weights[@]}; i++ )); do
+        download_sam_weights_async ${sam_weights[i]} &
+    done
+    popd > /dev/null
 }
 
 function main {
     create_env
 
-    download_roboflow
+    make_dir datasets
+    pushd datasets > /dev/null
 
-    for pid in "${GLOBAL_PIDS_ROBOFLOW}"; do
+    download_roboflow
+    download_sam_weights
+
+    for pid in "${GLOBAL_PIDS_TO_WAIT}"; do
         wait $pid || let "RESULT=1"
     done
 
@@ -90,6 +115,8 @@ function main {
     fi
 
     download_fiftyone
+
+    popd > /dev/null
 
     python transform_datasets.py
 
