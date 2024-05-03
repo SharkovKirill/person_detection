@@ -24,17 +24,18 @@ def yolov8_from_coco(height, width, x, y, w_before, h_before):
 
 
 def prepare_fiftyone_COCO(
-    ID_CLASS_PERSON_NEW, IMAGES_TYPE, SUBSETS_TO_PREPARE, SUBSETS_TO_RENAME
+    dataset_dir_path, ID_CLASS_PERSON_NEW, IMAGES_TYPE, SUBSETS_TO_PREPARE, SUBSETS_TO_RENAME
 ):
+    cwd = os.path.join(dataset_dir_path, "coco-2017")
     for subset in SUBSETS_TO_PREPARE:
-        subset_path = f"./coco-2017/{subset}/"
-        if not os.path.exists(subset_path + "labels"):
-            os.mkdir(subset_path + "labels")
-        coco = COCO(subset_path + "labels.json")
+        subset_path = os.path.join(cwd, subset)
+        if not os.path.exists(os.path.join(subset_path, "labels")):
+            os.mkdir(os.path.join(subset_path, "labels"))
+        coco = COCO(os.path.join(subset_path, "labels.json"))
         for img_id in coco.getImgIds(catIds=[1]):
             img = coco.loadImgs(img_id)
             txt_name = img[0]["file_name"].rstrip(IMAGES_TYPE) + ".txt"
-            txt_path = subset_path + "labels/" + txt_name
+            txt_path = os.path.join(subset_path, "labels", txt_name)
             height = img[0]["height"]
             width = img[0]["width"]
             correct_lines = []
@@ -54,12 +55,12 @@ def prepare_fiftyone_COCO(
                 correct_lines.append(new_correct_line)
             with open(txt_path, "w") as file:
                 file.write("\n".join(correct_lines))
-    shutil.rmtree("./coco-2017/raw")
-    os.remove("./coco-2017/info.json")
+    shutil.rmtree(os.path.join(cwd, "raw"))
+    os.remove(os.path.join(cwd, "info.json"))
     for subset in SUBSETS_TO_RENAME:
-        shutil.move(f"./coco-2017/{subset}/data", f"./coco-2017/{subset}/images")
-        os.remove(f"./coco-2017/{subset}/labels.json")
-    shutil.move(f"./coco-2017/validation", f"./coco-2017/valid")
+        shutil.move(os.path.join(cwd, subset, "data"), os.path.join(cwd, subset, "images"))
+        os.remove(os.path.join(cwd, subset, "labels.json"))
+    shutil.move(os.path.join(cwd, "validation"), os.path.join(cwd, "valid"))
     data = {
         "names": ["person"],
         "nc": 1,
@@ -67,11 +68,12 @@ def prepare_fiftyone_COCO(
         "val": "coco-2017/valid/images",
         "test": "coco-2017/test/images",
     }
-    with open("./coco-2017/data.yaml", "w") as file:
+    with open(os.path.join(cwd, "data.yaml"), "w") as file:
         yaml.dump(data, file, default_flow_style=False)
 
 
 def transform_coco(
+    dataset_dir_path: str,
     ID_CLASS_PERSON_NEW: int = ID_CLASS_PERSON_NEW,
     IMAGES_TYPE: str = IMAGES_TYPE,
     SUBSETS_TO_PREPARE: List[str] = SUBSETS_TO_PREPARE,
@@ -79,6 +81,6 @@ def transform_coco(
 ):
     print("fiftyone COCO preparing started")
     prepare_fiftyone_COCO(
-        ID_CLASS_PERSON_NEW, IMAGES_TYPE, SUBSETS_TO_PREPARE, SUBSETS_TO_RENAME
+        dataset_dir_path, ID_CLASS_PERSON_NEW, IMAGES_TYPE, SUBSETS_TO_PREPARE, SUBSETS_TO_RENAME
     )
     print("fiftyone COCO preparing finished")

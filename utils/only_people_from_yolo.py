@@ -27,7 +27,7 @@ def has_person_in_txt(ID_CLASSES_PERSON_BEFORE: tuple, file_names, dir_path: str
     else:
         add_method = file_names_with_person.add
     for file_name in file_names:
-        file_path = dir_path + f"/{file_name}"
+        file_path = os.path.join(dir_path, file_name)
         with open(file_path, "r") as file:
             for line in file:
                 if line.startswith(ID_CLASSES_PERSON_BEFORE):
@@ -41,7 +41,7 @@ def del_txt_not_in_list(directory, file_names_txt):
     # Удаляет txt с аннотациями в которых не встречаются люди
     for file_name in os.listdir(directory):
         if file_name not in file_names_txt:
-            file_path = directory + f"/{file_name}"
+            file_path = os.path.join(directory, file_name)
             os.remove(file_path)
 
 
@@ -50,7 +50,7 @@ def del_images_not_in_list_txt(directory, file_names_txt, pictures_type:str=".jp
     for file_name in os.listdir(directory):
         file_name_to_txt = file_name.rstrip(pictures_type) + ".txt"
         if file_name_to_txt not in file_names_txt:
-            file_path = directory + f"/{file_name}"
+            file_path = os.path.join(directory, file_name)
             os.remove(file_path)
 
 
@@ -59,7 +59,7 @@ def relabel_and_del_useless_classes_from_yolo8(
     ID_CLASSES_PERSON_BEFORE: tuple, ID_CLASS_PERSON_NEW, file_names, dir_path: str
 ):
     for file_name in file_names:
-        file_path = dir_path + f"/{file_name}"
+        file_path = os.path.join(dir_path, file_name)
         correct_lines = []
         with open(file_path, "r") as file:
             all_lines = file.read().split("\n")

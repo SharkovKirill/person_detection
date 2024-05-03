@@ -1,3 +1,4 @@
+import torch
 import torchvision
 import matplotlib.pyplot as plt
 import os
@@ -30,10 +31,10 @@ def relabel_and_del_useless_classes_from_pytorch_KITTI(
         img_path = directory_train_images + f'/{file_name.rstrip(".txt") + ".png"}'
         image = plt.imread(img_path)
         
-        if len(old_image.shape) == 3:
-            height, width, _ = old_image.shape 
-        elif len(old_image.shape) == 2:
-            height, width = old_image.shape
+        if len(image.shape) == 3:
+            height, width, _ = image.shape 
+        elif len(image.shape) == 2:
+            height, width = image.shape
             
         correct_lines = []
         with open(txt_path, "r") as file:
@@ -60,16 +61,18 @@ def relabel_and_del_useless_classes_from_pytorch_KITTI(
             file.write("\n".join(correct_lines))
 
 
-def download_pytorch_KITTI():
-    kitti_data = torchvision.datasets.Kitti(root="./", train=True, download=True)
+def download_pytorch_KITTI(datasets_dir_path):
+    kitti_data = torchvision.datasets.Kitti(root=datasets_dir_path, train=True, download=True)
 
 
 def prepare_pytorch_KITTI(
+    datasets_dir_path,
     ID_CLASSES_PERSON_BEFORE,
     ID_CLASS_PERSON_NEW,
     directory_train_labels,
     directory_train_images,
 ):
+    cwd = os.path.join(datasets_dir_path, "Kitti")
 
     file_names_train_labels = list_files_in_directory(directory_train_labels)
     file_names_with_person_train = has_person_in_txt(
@@ -84,36 +87,44 @@ def prepare_pytorch_KITTI(
         directory_train_labels,
         directory_train_images,
     )
-    os.remove("./Kitti/raw/data_object_image_2.zip")
-    os.remove("./Kitti/raw/data_object_label_2.zip")
-    shutil.rmtree("./Kitti/raw/testing")
-    shutil.move("./Kitti/raw/training/image_2", "./Kitti/raw/training/images")
-    shutil.move("./Kitti/raw/training/label_2", "./Kitti/raw/training/labels")
-    shutil.move("./Kitti/raw/training", "./Kitti/raw/train")
-    shutil.move("./Kitti/raw/train", "./Kitti/")
-    shutil.rmtree("./Kitti/raw")
+
+    raw_dir = os.path.join(cwd, "raw")
+    os.remove(os.path.join(raw_dir, "data_object_image_2.zip"))
+    os.remove(os.path.join(raw_dir, "data_object_label_2.zip"))
+
+    shutil.rmtree(os.path.join(raw_dir, "testing"))
+    
+    training_dir = os.path.join(raw_dir, "training")
+    shutil.move(os.path.join(training_dir, "image_2"), os.path.join(training_dir, "images"))
+    shutil.move(os.path.join(training_dir, "label_2"), os.path.join(training_dir, "labels"))
+    shutil.move(training_dir, os.path.join(cwd, "train"))
+
+    shutil.rmtree(raw_dir)
+    
     data = {
         'names': ['person'],
         'nc': 1,
         'train': 'Kitti/train/images',
     }
-    with open('./Kitti/data.yaml', 'w') as file:
+    with open(os.path.join(cwd, "data.yaml"), 'w') as file:
         yaml.dump(data, file, default_flow_style=False)
     
 def transform_kitti(
+    datasets_dir_path: str,
     ID_CLASSES_PERSON_BEFORE=ID_CLASSES_PERSON_BEFORE,
     ID_CLASS_PERSON_NEW=ID_CLASS_PERSON_NEW
 ):
-    directory_train_labels = "./Kitti/raw/training/label_2"
-    directory_train_images = "./Kitti/raw/training/image_2"
+    directory_train_labels = os.path.join(datasets_dir_path, "Kitti", "raw", "training", "label_2")
+    directory_train_images = os.path.join(datasets_dir_path, "Kitti", "raw", "training", "image_2")
 
     print("Importing PyTorch KITTI")
-    download_pytorch_KITTI()
+    # download_pytorch_KITTI(datasets_dir_path)
 
     print("pytorch KITTI preparing started")
     print("pytorch KITTI preparing started")
 
     prepare_pytorch_KITTI(
+        datasets_dir_path,
         ID_CLASSES_PERSON_BEFORE,
         ID_CLASS_PERSON_NEW,
         directory_train_labels,
