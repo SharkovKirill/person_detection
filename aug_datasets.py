@@ -31,8 +31,8 @@ def save_augmented_copy(
         )  # changing the order for augmentation
 
     default_image = cv2.imread(one_image_path)
-    if len(image.shape) == 3:
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    if len(default_image.shape) == 3:
+        default_image = cv2.cvtColor(default_image, cv2.COLOR_BGR2RGB)
 
     transform = A.Compose(
         [A.OpticalDistortion(**aug_params)], bbox_params=A.BboxParams(format="yolo")
@@ -77,7 +77,9 @@ def save_augmented_copy_with_options(
         default_boxes_prepared.append(
             [box_list[1], box_list[2], box_list[3], box_list[4], ID_CLASS_PERSON_NEW]
         )  # changing the order for augmentation
-    default_image = plt.imread(one_image_path)
+    default_image = cv2.imread(one_image_path)
+    if len(default_image.shape) == 3:
+        default_image = cv2.cvtColor(default_image, cv2.COLOR_BGR2RGB)
     transform = A.Compose(
         [A.OpticalDistortion(**aug_params)], bbox_params=A.BboxParams(format="yolo")
     )
