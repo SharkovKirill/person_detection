@@ -12,7 +12,7 @@ import yaml
 ID_CLASS_PERSON_NEW = 0
 IMAGES_TYPE = ".jpg"
 SUBSETS_TO_PREPARE = ["train", "validation"]
-SUBSETS_TO_RENAME = ["train", "validation", "test"]
+SUBSETS_TO_RENAME = ["train", "validation"]
 
 
 def yolov8_from_coco(height, width, x, y, w_before, h_before):
@@ -66,7 +66,6 @@ def prepare_fiftyone_COCO(
         "nc": 1,
         "train": "coco-2017/train/images",
         "val": "coco-2017/valid/images",
-        "test": "coco-2017/test/images",
     }
     with open(os.path.join(cwd, "data.yaml"), "w") as file:
         yaml.dump(data, file, default_flow_style=False)

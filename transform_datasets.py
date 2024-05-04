@@ -9,7 +9,7 @@ from dataset_transformers.transform_pascal_voc import transform_pascal_voc
 from dataset_transformers.transform_pdf import transform_pdf
 from dataset_transformers.transform_widerperson import transform_widerperson
 
-DATASETS_DIR = os.path.join(os.getcwd(), "datasets")
+DATASETS_DIR = os.path.join(os.getcwd(), sys.argv[1])
 
 def main() -> int:
     transform_coco(DATASETS_DIR)
