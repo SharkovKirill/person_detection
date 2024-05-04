@@ -61,15 +61,17 @@ def stage_apply_sam(
 
     sam = initialize_sam(sam_weights_path, sam_model_type)
     
-    for i in range(0, 1):
+    for i in range(0, len(txt_paths)):
+        correct_lines, image_rgb = after_fisheye_aug[i]
+
         segment_one_image_with_options(
-            0,
-            image_paths[i],
-            None,
-            txt_paths[i],
-            sam,
-            image_rgb=after_fisheye_aug[i][1],
-            correct_lines_float=after_fisheye_aug[i][0]
+            ID_CLASS_PERSON_NEW=0,
+            one_image_path=image_paths[i],
+            one_label_path=None,
+            one_label_seg_path=txt_paths[i],
+            sam=sam,
+            image_rgb=image_rgb,
+            correct_lines_float=correct_lines
         )
 
 
