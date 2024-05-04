@@ -29,10 +29,21 @@ function download_dataset_fiftyone {
     DATASET_NAME=$1
     LABELS=$2
     CLASSES=$3
+    MAX_SAMPLES=$4
+    MAX_SAMPLES_STR=""
+    if [[ ! (-z "${MAX_SAMPLES}") ]]; then
+        MAX_SAMPLES_STR="max_samples=${MAX_SAMPLES}"
+    fi
+    SPLITS=$5
+    SPLITS=$(echo ${SPLITS//,/ })
+
+
     fiftyone zoo datasets load ${DATASET_NAME} \
+    --splits ${SPLITS} \
     --kwargs \
         label_types=${LABELS} \
         classes=${CLASSES} \
+        ${MAX_SAMPLES_STR} \
     --dataset-dir "./${DATASET_NAME}"
 }
 
@@ -54,8 +65,8 @@ fiftyone_dataset_names=(
     coco-2017
 )
 fiftyone_dataset_args=(
-    "detections Man,Woman,Person"
-    "detections person"
+    "detections Man,Woman,Person 5 validation,test,train"
+    "detections person 10 validation,train"
 )
 
 sam_weights=(
@@ -94,6 +105,8 @@ function download_sam_weights {
 }
 
 function main {
+    DATASETS_DIR="datasets"
+
     create_env
 
     make_dir sam_weights
@@ -103,8 +116,8 @@ function main {
 
     popd > /dev/null
 
-    make_dir datasets
-    pushd datasets > /dev/null
+    make_dir ${DATASETS_DIR}
+    pushd ${DATASETS_DIR} > /dev/null
 
     download_roboflow
 
@@ -117,11 +130,12 @@ function main {
        exit 1
     fi
 
+    python dataset_transformers/download_kitti.py ${DATASETS_DIR}
     download_fiftyone
 
     popd > /dev/null
 
-    python transform_datasets.py
+    python transform_datasets.py ${DATASETS_DIR}
 
     disable_env
 }

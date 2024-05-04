@@ -1,5 +1,3 @@
-import torch
-import torchvision
 import matplotlib.pyplot as plt
 import os
 import shutil
@@ -61,10 +59,6 @@ def relabel_and_del_useless_classes_from_pytorch_KITTI(
             file.write("\n".join(correct_lines))
 
 
-def download_pytorch_KITTI(datasets_dir_path):
-    kitti_data = torchvision.datasets.Kitti(root=datasets_dir_path, train=True, download=True)
-
-
 def prepare_pytorch_KITTI(
     datasets_dir_path,
     ID_CLASSES_PERSON_BEFORE,
@@ -116,9 +110,6 @@ def transform_kitti(
 ):
     directory_train_labels = os.path.join(datasets_dir_path, "Kitti", "raw", "training", "label_2")
     directory_train_images = os.path.join(datasets_dir_path, "Kitti", "raw", "training", "image_2")
-
-    print("Importing PyTorch KITTI")
-    # download_pytorch_KITTI(datasets_dir_path)
 
     print("pytorch KITTI preparing started")
     print("pytorch KITTI preparing started")
