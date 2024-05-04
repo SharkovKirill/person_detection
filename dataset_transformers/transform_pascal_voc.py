@@ -12,7 +12,7 @@ from utils.only_people_from_yolo import (
     relabel_and_del_useless_classes_from_yolo8,
 )
 
-ID_CLASSES_PERSON_BEFORE = ('14')
+ID_CLASSES_PERSON_BEFORE = ('14', )
 ID_CLASS_PERSON_NEW = 0
 
 
