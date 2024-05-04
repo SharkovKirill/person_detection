@@ -88,22 +88,25 @@ function download_sam_weights_async {
 }
 
 function download_sam_weights {
-    make_dir sam_weights
-    pushd sam_weights > /dev/null
     for (( i=0; i<${#sam_weights[@]}; i++ )); do
         download_sam_weights_async ${sam_weights[i]} &
     done
-    popd > /dev/null
 }
 
 function main {
     create_env
 
+    make_dir sam_weights
+    pushd sam_weights > /dev/null
+
+    download_sam_weights
+
+    popd > /dev/null
+
     make_dir datasets
     pushd datasets > /dev/null
 
     download_roboflow
-    download_sam_weights
 
     for pid in "${GLOBAL_PIDS_TO_WAIT}"; do
         wait $pid || let "RESULT=1"
