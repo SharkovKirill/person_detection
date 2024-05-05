@@ -29,22 +29,18 @@ function download_dataset_fiftyone {
     DATASET_NAME=$1
     LABELS=$2
     CLASSES=$3
-    MAX_SAMPLES=$4
-    MAX_SAMPLES_STR=""
-    if [[ ! (-z "${MAX_SAMPLES}") ]]; then
-        MAX_SAMPLES_STR="max_samples=${MAX_SAMPLES}"
-    fi
-    SPLITS=$5
-    SPLITS=$(echo ${SPLITS//,/ })
+    MAX_SAMPLES=($(echo ${4//,/ }))
+    SPLITS=($(echo ${5//,/ }))
 
-
-    fiftyone zoo datasets load ${DATASET_NAME} \
-    --splits ${SPLITS} \
-    --kwargs \
-        label_types=${LABELS} \
-        classes=${CLASSES} \
-        ${MAX_SAMPLES_STR} \
-    --dataset-dir "./${DATASET_NAME}"
+    for (( j=0; j<${#SPLITS[@]}; j++ )); do
+        fiftyone zoo datasets load ${DATASET_NAME} \
+        --split ${SPLITS[j]} \
+        --kwargs \
+            label_types=${LABELS} \
+            classes=${CLASSES} \
+            max_samples=${MAX_SAMPLES[j]} \
+        --dataset-dir "./${DATASET_NAME}"
+    done
 }
 
 roboflow_dataset_names=(
@@ -65,8 +61,8 @@ fiftyone_dataset_names=(
     coco-2017
 )
 fiftyone_dataset_args=(
-    "detections Man,Woman,Person 5 validation,test,train"
-    "detections person 10 validation,train"
+    "detections Man,Woman,Person 2000,3000,10000 validation,test,train"
+    "detections person 2000,13000 validation,train"
 )
 
 sam_weights=(
