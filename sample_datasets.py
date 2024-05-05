@@ -3,16 +3,20 @@ import sys
 import os
 import random
 import shutil
+import yaml
 
-from typing import List, Tuple
+from typing import List, Tuple, Dict, Any
 
-from aug_datasets import save_augmented_copy_with_options, aug_params
+from aug_datasets import save_augmented_copy_with_options, all_aug_params
 from segmentation import initialize_sam, segment_one_image_with_options
+
+from segment_anything.modeling import Sam
 
 from numpy import ndarray
 from numpy import random as rd
 
-def create_dirtree_without_files(src, dst):
+
+def create_dirtree_without_files(src: str, dst: str):
     src = os.path.abspath(src)
     src_prefix = len(src) + len(os.path.sep)
 
@@ -25,16 +29,9 @@ def create_dirtree_without_files(src, dst):
 
 
 def stage_apply_fisheye_aug(
-    txt_paths: List[str],
-    image_paths: List[str],
-    distortion_limits: Tuple[float, float],
-    shift_limits: Tuple[float, float],
+    txt_paths: List[str], image_paths: List[str], fisheye_params: Dict[str, Any]
 ) -> List[Tuple[List[List[float]], ndarray]]:
     assert len(txt_paths) == len(image_paths)
-
-    aug_options = aug_params
-    aug_options["distort_limit"] = distortion_limits
-    aug_options["shift_limit"] = shift_limits
 
     txt_after_aug = []
     for i in range(0, len(txt_paths)):
@@ -43,7 +40,7 @@ def stage_apply_fisheye_aug(
                 image_paths[i],
                 image_paths[i],
                 txt_paths[i],
-                aug_params=aug_options,
+                all_aug_params=fisheye_params,
                 also_return_image=True,
             )
         )
@@ -54,14 +51,11 @@ def stage_apply_fisheye_aug(
 def stage_apply_sam(
     txt_paths: List[str],
     image_paths: List[str],
-    sam_weights_path: str,
-    sam_model_type: str,
-    after_fisheye_aug: List[Tuple[List[List[float]], ndarray]]
+    sam: Sam,
+    after_fisheye_aug: List[Tuple[List[List[float]], ndarray]],
 ) -> None:
     assert len(txt_paths) == len(image_paths)
 
-    sam = initialize_sam(sam_weights_path, sam_model_type)
-    
     for i in range(0, len(txt_paths)):
         correct_lines, image_rgb = after_fisheye_aug[i]
 
@@ -72,64 +66,101 @@ def stage_apply_sam(
             one_label_seg_path=txt_paths[i],
             sam=sam,
             image_rgb=image_rgb,
-            correct_lines_float=correct_lines
+            correct_lines_float=correct_lines,
         )
 
 
-def sample_and_copy_file(
-    datasets_dir: str, output_dir: str, samples_number: int
-) -> Tuple[List[str], List[str]]:
-    if os.path.exists(output_dir):
-        shutil.rmtree(output_dir)
-
-    create_dirtree_without_files(datasets_dir, output_dir)
-
-    cwd = os.path.join(os.getcwd(), datasets_dir)
-    datasets = [x for x in os.listdir(cwd) if os.path.isdir(os.path.join(cwd, x))]
-
-    txt_paths = []
-    image_paths = []
-
-    for dataset in datasets:
-        dataset_dir = os.path.join(cwd, dataset)
-        splits = [
-            os.path.relpath(os.path.join(dataset_dir, x), cwd)
-            for x in os.listdir(dataset_dir)
-            if os.path.isdir(os.path.join(dataset_dir, x))
-        ]
-
-        for split in splits:
-            labels_dir = os.path.join(cwd, split, "labels")
-            labels_dir_size = len(next(os.walk(labels_dir))[2])
-            images_dir = os.path.join(cwd, split, "images")
-            cur_samples_number = min(samples_number, labels_dir_size)
-
-            txt_random_sample = rd.choice(
-                os.listdir(labels_dir), size=cur_samples_number, replace=False
+def apply_stages(
+    sampled_datasets: Dict[str, Dict[str, Any]],
+    fisheye_params: Dict[str, Any],
+    sam_params: Dict[str, str],
+) -> None:
+    aug_options = all_aug_params.copy()
+    for param_name, param_config in fisheye_params.items():
+        aug_options[param_name].update(param_config)
+        
+    sam = initialize_sam(sam_params["weights_path"], sam_params["model_type"])
+    
+    after_fisheye: List[Tuple[List[List[float]], ndarray]] = []
+    for dataset_config in sampled_datasets.values():
+        if dataset_config["apply_fisheye"]:
+            after_fisheye = stage_apply_fisheye_aug(
+                dataset_config["txt_paths"],
+                dataset_config["image_paths"],
+                aug_options,
             )
-            sample_name = [x.rstrip(".txt") for x in txt_random_sample]
-            txt_random_sample = [
-                os.path.relpath(os.path.join(split, "labels", x))
-                for x in txt_random_sample
-            ]
+        if dataset_config["apply_sam"]:
+            stage_apply_sam(
+                dataset_config["txt_paths"],
+                dataset_config["image_paths"],
+                sam,
+                after_fisheye,
+            )
 
-            deduct_img_type = next(os.walk(images_dir))[2][0]
-            _, img_type_random = os.path.splitext(deduct_img_type)
-            sample_name = [
-                os.path.relpath(os.path.join(split, "images", x + img_type_random))
-                for x in sample_name
-            ]
 
-            for txt_file in txt_random_sample:
-                output_dir_path = os.path.join(output_dir, txt_file)
-                txt_paths.append(output_dir_path)
-                shutil.copyfile(os.path.join(cwd, txt_file), output_dir_path)
-            for img_file in sample_name:
-                output_dir_path = os.path.join(output_dir, img_file)
-                image_paths.append(output_dir_path)
-                shutil.copyfile(os.path.join(cwd, img_file), output_dir_path)
+def sample_datasets(
+    datasets: List[Dict[str, Any]],
+    datasets_dir: str,
+    output_dir: str,
+) -> Dict[str, Dict[str, Any]]:
+    cwd = os.path.join(os.getcwd(), datasets_dir)
 
-    return (txt_paths, image_paths)
+    res = {}
+    for _ in datasets:
+        for dataset_name, dataset_config in _.items():
+            if not os.path.exists(os.path.join(cwd, dataset_name)):
+                continue
+
+            txt_paths = []
+            image_paths = []
+            samples_number = dataset_config.get("samples_number", -1)
+
+            for split_name, split_value in dataset_config["splits"].items():
+                labels_dir = os.path.join(cwd, dataset_name, split_name, "labels")
+                labels_dir_size = len(next(os.walk(labels_dir))[2])
+                images_dir = os.path.join(cwd, dataset_name, split_name, "images")
+
+                if samples_number == -1:
+                    config_value = split_value
+                else:
+                    config_value = int(round(samples_number * split_value))
+                cur_samples_number = min(config_value, labels_dir_size)
+
+                txt_random_sample = rd.choice(
+                    os.listdir(labels_dir), size=cur_samples_number, replace=False
+                )
+                sample_name = [x.rstrip(".txt") for x in txt_random_sample]
+                txt_random_sample = [
+                    os.path.join(dataset_name, split_name, "labels", x)
+                    for x in txt_random_sample
+                ]
+
+                deduct_img_type = next(os.walk(images_dir))[2][0]
+                _, img_type_random = os.path.splitext(deduct_img_type)
+                sample_name = [
+                    os.path.join(
+                        dataset_name, split_name, "images", x + img_type_random
+                    )
+                    for x in sample_name
+                ]
+
+                for txt_file in txt_random_sample:
+                    output_dir_path = os.path.join(output_dir, txt_file)
+                    txt_paths.append(output_dir_path)
+                    shutil.copyfile(os.path.join(cwd, txt_file), output_dir_path)
+                for img_file in sample_name:
+                    output_dir_path = os.path.join(output_dir, img_file)
+                    image_paths.append(output_dir_path)
+                    shutil.copyfile(os.path.join(cwd, img_file), output_dir_path)
+
+            res[dataset_name] = {
+                "image_paths": image_paths,
+                "txt_paths": txt_paths,
+                "apply_sam": "sam" in dataset_config["stages"],
+                "apply_fisheye": "fisheye" in dataset_config["stages"],
+            }
+
+    return res
 
 
 def initialize_parser() -> argparse.ArgumentParser:
@@ -138,6 +169,13 @@ def initialize_parser() -> argparse.ArgumentParser:
     )
 
     parser.add_argument(
+        "-c",
+        "--config-path",
+        required=True,
+        dest="config_path",
+        help="A path to the yaml config file",
+    )
+    parser.add_argument(
         "-d",
         "--datasets-dir-path",
         required=True,
@@ -145,57 +183,11 @@ def initialize_parser() -> argparse.ArgumentParser:
         help="A path to the directory with datasets",
     )
     parser.add_argument(
-        "-n",
-        "--samples-number",
-        type=int,
-        required=True,
-        dest="samples_number",
-        help="The number of samples from all datasets",
-    )
-    parser.add_argument(
-        "-w",
-        "--sam-weights-path",
-        required=True,
-        dest="sam_weights_path",
-        help="A path to the weights for SAM model",
-    )
-    parser.add_argument(
-        "-m",
-        "--sam-model-type",
-        required=True,
-        dest="sam_model_type",
-        choices=["vit_h", "vit_b", "vit_l"],
-        help="A model type for SAM model",
-    )
-
-    parser.add_argument(
         "-o",
         "--output-dir-path",
         default="sampled_datasets",
         dest="output_dir_path",
         help="A path to the directory with the prepared samples",
-    )
-    parser.add_argument(
-        "-s", "--random-seed", default=42, dest="random_seed", help="Random seed"
-    )
-
-    parser.add_argument(
-        "-t",
-        "--distort-limit",
-        nargs=2,
-        type=float,
-        default=[0.0, 0.0],
-        dest="distort_limit",
-        help="Distortion limit for fisheye augmentaion",
-    )
-    parser.add_argument(
-        "-f",
-        "--shift-limit",
-        nargs=2,
-        type=float,
-        default=[0.0, 0.0],
-        dest="shift_limit",
-        help="Shift limit for fisheye augmentaion",
     )
 
     return parser
@@ -205,18 +197,20 @@ def main() -> int:
     parser = initialize_parser()
     args = parser.parse_args()
 
-    random.seed(a=args.random_seed)
-    txt_paths, image_paths = sample_and_copy_file(
-        args.datasets_dir_path, args.output_dir_path, args.samples_number
+    yaml_data = {}
+    with open(os.path.join(os.getcwd(), args.config_path), "r") as stream:
+        yaml_data = yaml.safe_load(stream)
+
+    random.seed(a=yaml_data.get("random_seed", None))
+    if os.path.exists(args.output_dir_path):
+        shutil.rmtree(args.output_dir_path)
+    create_dirtree_without_files(args.datasets_dir_path, args.output_dir_path)
+
+    sampled_dict = sample_datasets(
+        yaml_data["datasets"], args.datasets_dir_path, args.output_dir_path
     )
 
-    after_fisheye = stage_apply_fisheye_aug(
-        txt_paths,
-        image_paths,
-        (args.distort_limit[0], args.distort_limit[1]),
-        (args.shift_limit[0], args.shift_limit[1]),
-    )
-    stage_apply_sam(txt_paths, image_paths, args.sam_weights_path, args.sam_model_type, after_fisheye)
+    apply_stages(sampled_dict, yaml_data["fisheye_params"], yaml_data["sam_params"])
 
     return 0
 

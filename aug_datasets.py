@@ -29,7 +29,7 @@ def save_augmented_copy(
     one_label_path: str,
     one_label_aug_path: str,
     ID_CLASS_PERSON_NEW: int = ID_CLASS_PERSON_NEW,
-    aug_params: dict = aug_params,
+    aug_params: dict = all_aug_params,
 ):
 
     with open(one_label_path, "r") as bb_file:
