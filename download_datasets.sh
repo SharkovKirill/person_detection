@@ -130,11 +130,11 @@ function main {
        exit 1
     fi
 
-    python dataset_transformers/download_kitti.py ${DATASETS_DIR}
     download_fiftyone
 
     popd > /dev/null
 
+    python dataset_transformers/download_kitti.py ${DATASETS_DIR}
     python transform_datasets.py ${DATASETS_DIR}
 
     disable_env
