@@ -5,3 +5,4 @@
 **/.DS_Store
 sampled_datasets/**
 datasets/**
+sam_weights/**
