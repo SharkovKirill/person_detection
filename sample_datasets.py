@@ -10,6 +10,7 @@ from aug_datasets import save_augmented_copy_with_options, aug_params
 from segmentation import initialize_sam, segment_one_image_with_options
 
 from numpy import ndarray
+from numpy import random as rd
 
 def create_dirtree_without_files(src, dst):
     src = os.path.abspath(src)
@@ -103,8 +104,8 @@ def sample_and_copy_file(
             images_dir = os.path.join(cwd, split, "images")
             cur_samples_number = min(samples_number, labels_dir_size)
 
-            txt_random_sample = random.choices(
-                os.listdir(labels_dir), k=cur_samples_number
+            txt_random_sample = rd.choice(
+                os.listdir(labels_dir), size=cur_samples_number, replace=False
             )
             sample_name = [x.rstrip(".txt") for x in txt_random_sample]
             txt_random_sample = [
