@@ -4,11 +4,22 @@ import cv2
 from typing import List
 
 ID_CLASS_PERSON_NEW = 0
-aug_params = {
-    "distort_limit": (2.8, 2.8),
-    "shift_limit": (10, 10),
-    "border_mode": cv2.BORDER_CONSTANT,
-    "p": 1,
+
+all_aug_params = {
+    "distortion_params": {
+        "distort_limit": (2.8, 2.8),
+        "shift_limit": (10, 10),
+        "border_mode": cv2.BORDER_CONSTANT,
+        "p": 0.5,
+    },
+    "horizontal_params": {
+        "p": 0.5,
+    },
+    "perspective_params":{ 
+        "scale":(0.1, 0.15),
+        "p":0.5,
+        "keep_size":True
+    }
 }
 
 
@@ -64,7 +75,7 @@ def save_augmented_copy_with_options(
     one_label_path: str,
     one_label_aug_path: str = None,
     ID_CLASS_PERSON_NEW: int = ID_CLASS_PERSON_NEW,
-    aug_params: dict = aug_params,
+    all_aug_params: dict = all_aug_params,
     also_return_image: bool = True,
     save_new_txt: bool = False,
 ):
@@ -81,7 +92,12 @@ def save_augmented_copy_with_options(
     if len(default_image.shape) == 3:
         default_image = cv2.cvtColor(default_image, cv2.COLOR_BGR2RGB)
     transform = A.Compose(
-        [A.OpticalDistortion(**aug_params)], bbox_params=A.BboxParams(format="yolo")
+        [
+            A.OpticalDistortion(**all_aug_params["distortion_params"]),
+            A.HorizontalFlip(**all_aug_params["horizontal_params"]),
+            A.Perspective(**all_aug_params["perspective_params"])
+        ],
+        bbox_params=A.BboxParams(format="yolo"),
     )
     transformed = transform(image=default_image, bboxes=default_boxes_prepared)
     transformed_image = transformed["image"]
