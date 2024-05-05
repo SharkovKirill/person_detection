@@ -1,7 +1,6 @@
 import argparse
 import sys
 import os
-import random
 import shutil
 import yaml
 
@@ -201,7 +200,7 @@ def main() -> int:
     with open(os.path.join(os.getcwd(), args.config_path), "r") as stream:
         yaml_data = yaml.safe_load(stream)
 
-    random.seed(a=yaml_data.get("random_seed", None))
+    rd.seed(yaml_data.get("random_seed", None))
     if os.path.exists(args.output_dir_path):
         shutil.rmtree(args.output_dir_path)
     create_dirtree_without_files(args.datasets_dir_path, args.output_dir_path)
