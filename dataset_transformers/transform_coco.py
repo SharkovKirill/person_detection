@@ -30,7 +30,7 @@ def prepare_fiftyone_COCO(
     for subset in SUBSETS_TO_PREPARE:
         subset_path = os.path.join(cwd, subset)
         if not os.path.exists(os.path.join(subset_path, "labels")):
-            os.mkdir(os.path.join(subset_path, "labels"))
+            os.makedirs(os.path.join(subset_path, "labels"))
         coco = COCO(os.path.join(subset_path, "labels.json"))
         for img_id in coco.getImgIds(catIds=[1]):
             img = coco.loadImgs(img_id)
