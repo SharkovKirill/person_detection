@@ -4,7 +4,7 @@ import os
 import shutil
 import yaml
 
-from typing import List, Tuple, Dict, Any
+from typing import List, Dict, Any
 
 from aug_datasets import aug_bboxes_and_image, all_aug_params
 from segmentation import initialize_sam, segment_one_image
@@ -14,9 +14,7 @@ from utils.vizualize_bboxes import (
     save_image,
     save_bboxes,
 )
-from segment_anything.modeling import Sam
 
-from numpy import ndarray
 from numpy import random as rd
 
 
@@ -43,7 +41,6 @@ def apply_stages(
 
     sam = initialize_sam(sam_params["weights_path"], sam_params["model_type"])
 
-    after_fisheye: List[Tuple[List[List[float]], ndarray]] = []
     for dataset_config in sampled_datasets.values():
         if dataset_config["apply_fisheye"] or dataset_config["apply_sam"]:
             assert len(dataset_config["txt_paths"]) == len(
@@ -204,7 +201,7 @@ def main() -> int:
             ],
             "nc": 1,
             "names": ["person"],
-            "path": f"../{args.output_dir_path}",
+            "path": os.path.join(os.getcwd(), args.output_dir_path),
         }
         yaml.safe_dump(config, stream)
 
