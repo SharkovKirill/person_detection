@@ -2,9 +2,51 @@ import os
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import random
+from typing import List
+import cv2
+from numpy import ndarray
 
 dir_path_train = "./Pascal-VOC-2012-1/train/"
 dir_path_valid = "./Pascal-VOC-2012-1/valid/"
+
+
+def str_box_to_int_floats(bbox: List[str]):
+    return [
+        int(bbox[0]),
+        float(bbox[1]),
+        float(bbox[2]),
+        float(bbox[3]),
+        float(bbox[4]),
+    ]
+
+
+def read_bboxes(one_label_path: str):
+    with open(one_label_path, "r") as bb_file:
+        boxes = bb_file.read().split("\n")
+    bboxes_list = [str_box_to_int_floats(one_box.split(" ")) for one_box in boxes]
+    return bboxes_list
+
+
+def read_image(one_image_path: str):
+    image = cv2.imread(one_image_path)
+    if len(image.shape) == 3:
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    return image
+
+
+def save_bboxes(bboxes, one_label_path):
+    correct_lines_str = [
+        " ".join(list(map(str, one_box))) for one_box in bboxes
+    ]  # List[f"{ID_CLASS_PERSON_NEW} {x_center} {y_center} {w} {h}"]
+    with open(one_label_path, "w") as file:
+        file.write("\n".join(correct_lines_str))
+
+
+def save_image(image: ndarray, one_image_path: str):
+    if len(image.shape) == 3:
+        plt.imsave(one_image_path, image)
+    elif len(image.shape) == 2:
+        plt.imsave(one_image_path, image, cmap="grey")
 
 
 def show_bb_yolo(
@@ -106,7 +148,7 @@ def show_old_and_new_bb(
     one_label_old_path: str,
     one_label_new_path: str,
     figsize: tuple,
-    title: str = 'Before -> after'
+    title: str = "Before -> after",
 ):
     old_image = plt.imread(one_image_old_path)
     with open(one_label_old_path, "r") as bb_file:

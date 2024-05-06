@@ -7,6 +7,7 @@ import supervision as sv
 import torch
 from segment_anything import SamPredictor, sam_model_registry
 from segment_anything.modeling import Sam
+from numpy import ndarray
 
 
 def initialize_sam(sam_weights_path: str, sam_model_type: str):
@@ -46,7 +47,7 @@ def boxes_sam_one_pic_io(one_image_path: str, one_label_path: str):
     return default_boxes
 
 
-def boxes_sam_one_pic_from_aug_func(
+def boxes_sam_one_pic(
     image,  # np.array H*W*C
     correct_lines_float: List[
         List[float]
@@ -58,7 +59,7 @@ def boxes_sam_one_pic_from_aug_func(
     for box_list in correct_lines_float:
         default_boxes.append(
             bboxes_SAM_from_yolo(
-                box_list[0], box_list[1], box_list[2], box_list[3], width, height
+                box_list[1], box_list[2], box_list[3], box_list[4], width, height
             )
         )  # changing the order for augmentation
     return default_boxes
@@ -72,44 +73,25 @@ def xyxy_to_yolov8(x1, y1, x2, y2, height, width):
     return x_center, y_center, w, h
 
 
-def segment_one_image_with_options(
-    ID_CLASS_PERSON_NEW: int,
-    one_image_path: str,
-    one_label_path: str,
-    one_label_seg_path: str,
+def segment_one_image(
     sam: Sam,
-    image_rgb=None,
-    correct_lines_float: List[List[float]] = None,
+    image_rgb: ndarray,
+    correct_lines_float,
     figsize: tuple = None,
     show_plots: bool = False,
 ):
-    if (image_rgb is not None) and (
-        correct_lines_float is not None
-    ):  # для лучшей читаемости частичное повторение кода
-        mask_predictor = SamPredictor(sam)
-        mask_predictor.set_image(image_rgb)
-        bboxes_one_image = boxes_sam_one_pic_from_aug_func(
-            image_rgb, correct_lines_float
-        )
-        if show_plots:
-            image_bgr = cv2.cvtColor(image_rgb, cv2.COLOR_RGB2BGR)
-
-    else:
-        image_bgr = cv2.imread(one_image_path)
-        image_rgb = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2RGB)
-        mask_predictor = SamPredictor(sam)
-        mask_predictor.set_image(image_rgb)
-        bboxes_one_image = boxes_sam_one_pic_io(one_image_path, one_label_path)
-
+    ID_CLASS_PERSON_NEW = correct_lines_float[0][0]
+    mask_predictor = SamPredictor(sam)
+    mask_predictor.set_image(image_rgb)
+    bboxes_one_image = boxes_sam_one_pic(image_rgb, correct_lines_float)
     if show_plots:
+        image_bgr = cv2.cvtColor(image_rgb, cv2.COLOR_RGB2BGR)
         masks_all = np.zeros((image_rgb.shape[0], image_rgb.shape[1]))
 
     correct_new_boxes = []
 
     for one_bbox_aug in bboxes_one_image:
-        masks, _, _ = mask_predictor.predict(
-            box=one_bbox_aug, multimask_output=True
-        )
+        masks, _, _ = mask_predictor.predict(box=one_bbox_aug, multimask_output=True)
         if show_plots:
             box_annotator = sv.BoxAnnotator(color=sv.Color.RED)
             mask_annotator = sv.MaskAnnotator(
@@ -126,7 +108,7 @@ def segment_one_image_with_options(
             image_rgb.shape[0],
             image_rgb.shape[1],
         )
-        new_correct_line = f"{ID_CLASS_PERSON_NEW} {x_center} {y_center} {w} {h}"
+        new_correct_line = [int(ID_CLASS_PERSON_NEW), x_center, y_center, w, h]
         correct_new_boxes.append(new_correct_line)
         if show_plots:
             masks_all += detections.mask.squeeze()
@@ -145,13 +127,11 @@ def segment_one_image_with_options(
                 size=figsize,
             )
 
-    with open(one_label_seg_path, "w") as file:
-        file.write("\n".join(correct_new_boxes))
-
     if show_plots:
-        image_final = cv2.cvtColor(segmented_image, cv2.COLOR_BGR2RGB)
+        image_to_show = cv2.cvtColor(segmented_image, cv2.COLOR_BGR2RGB)
         red_color = np.array([255, 0, 0], dtype=np.uint8)
-        image_final[masks_all == 1] = red_color
+        image_to_show[masks_all == 1] = red_color
         if figsize is not None:
             plt.figure(figsize=(20, 10))
-        plt.imshow(image_final)
+        plt.imshow(image_to_show)
+    return correct_new_boxes, image_rgb

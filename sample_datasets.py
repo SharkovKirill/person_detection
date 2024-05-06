@@ -6,9 +6,14 @@ import yaml
 
 from typing import List, Tuple, Dict, Any
 
-from aug_datasets import save_augmented_copy_with_options, all_aug_params
-from segmentation import initialize_sam, segment_one_image_with_options
-
+from aug_datasets import aug_bboxes_and_image, all_aug_params
+from segmentation import initialize_sam, segment_one_image
+from utils.vizualize_bboxes import (
+    read_bboxes,
+    read_image,
+    save_image,
+    save_bboxes,
+)
 from segment_anything.modeling import Sam
 
 from numpy import ndarray
@@ -27,48 +32,6 @@ def create_dirtree_without_files(src: str, dst: str):
             os.mkdir(dirpath)
 
 
-def stage_apply_fisheye_aug(
-    txt_paths: List[str], image_paths: List[str], fisheye_params: Dict[str, Any]
-) -> List[Tuple[List[List[float]], ndarray]]:
-    assert len(txt_paths) == len(image_paths)
-
-    txt_after_aug = []
-    for i in range(0, len(txt_paths)):
-        txt_after_aug.append(
-            save_augmented_copy_with_options(
-                image_paths[i],
-                image_paths[i],
-                txt_paths[i],
-                all_aug_params=fisheye_params,
-                also_return_image=True,
-            )
-        )
-
-    return txt_after_aug
-
-
-def stage_apply_sam(
-    txt_paths: List[str],
-    image_paths: List[str],
-    sam: Sam,
-    after_fisheye_aug: List[Tuple[List[List[float]], ndarray]],
-) -> None:
-    assert len(txt_paths) == len(image_paths)
-
-    for i in range(0, len(txt_paths)):
-        correct_lines, image_rgb = after_fisheye_aug[i]
-
-        segment_one_image_with_options(
-            ID_CLASS_PERSON_NEW=0,
-            one_image_path=image_paths[i],
-            one_label_path=None,
-            one_label_seg_path=txt_paths[i],
-            sam=sam,
-            image_rgb=image_rgb,
-            correct_lines_float=correct_lines,
-        )
-
-
 def apply_stages(
     sampled_datasets: Dict[str, Dict[str, Any]],
     fisheye_params: Dict[str, Any],
@@ -82,19 +45,29 @@ def apply_stages(
 
     after_fisheye: List[Tuple[List[List[float]], ndarray]] = []
     for dataset_config in sampled_datasets.values():
-        if dataset_config["apply_fisheye"]:
-            after_fisheye = stage_apply_fisheye_aug(
-                dataset_config["txt_paths"],
-                dataset_config["image_paths"],
-                aug_options,
+        if dataset_config["apply_fisheye"] or dataset_config["apply_sam"]:
+            assert len(dataset_config["txt_paths"]) == len(
+                dataset_config["image_paths"]
             )
-        if dataset_config["apply_sam"]:
-            stage_apply_sam(
-                dataset_config["txt_paths"],
-                dataset_config["image_paths"],
-                sam,
-                after_fisheye,
-            )
+            for i in range(0, len(dataset_config["txt_paths"])):
+
+                bboxes_per_image = read_bboxes(dataset_config["txt_paths"][i])
+                one_image = read_image(dataset_config["image_paths"][i])
+
+                if dataset_config["apply_fisheye"]:
+                    bboxes_per_image, one_image = aug_bboxes_and_image(
+                        bboxes_per_image,
+                        one_image,
+                        aug_options,
+                    )
+
+                if dataset_config["apply_sam"]:
+                    bboxes_per_image, one_image = segment_one_image(
+                        sam, one_image, bboxes_per_image
+                    )
+
+                save_bboxes(bboxes_per_image, dataset_config["txt_paths"][i])
+                save_image(one_image, dataset_config["image_paths"][i])
 
 
 def sample_datasets(
@@ -231,7 +204,7 @@ def main() -> int:
             ],
             "nc": 1,
             "names": ["person"],
-            "path": f"../{args.output_dir_path}"
+            "path": f"../{args.output_dir_path}",
         }
         yaml.safe_dump(config, stream)
 
