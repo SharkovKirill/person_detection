@@ -10,7 +10,7 @@ function create_env {
 }
 
 function disable_env {
-    deactivate
+    source deactivate
 }
 
 function make_dir {
@@ -133,7 +133,6 @@ function main {
     python dataset_transformers/download_kitti.py ${DATASETS_DIR}
     python transform_datasets.py ${DATASETS_DIR}
 
-    disable_env
 }
 
 main
