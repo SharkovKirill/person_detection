@@ -215,22 +215,23 @@ def main() -> int:
     ) as stream:
         config = {
             "train": [
-                f"../{key}/train/images"
+                f"./{key}/train/images"
                 for key, value in sampled_dict.items()
                 if "train" in value["splits"]
             ],
             "test": [
-                f"../{key}/test/images"
+                f"./{key}/test/images"
                 for key, value in sampled_dict.items()
                 if "test" in value["splits"]
             ],
             "val": [
-                f"../{key}/valid/images"
+                f"./{key}/valid/images"
                 for key, value in sampled_dict.items()
                 if "valid" in value["splits"]
             ],
             "nc": 1,
             "names": ["person"],
+            "path": f"../{args.output_dir_path}"
         }
         yaml.safe_dump(config, stream)
 
