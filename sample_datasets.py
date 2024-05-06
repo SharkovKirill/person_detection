@@ -77,9 +77,9 @@ def apply_stages(
     aug_options = all_aug_params.copy()
     for param_name, param_config in fisheye_params.items():
         aug_options[param_name].update(param_config)
-        
+
     sam = initialize_sam(sam_params["weights_path"], sam_params["model_type"])
-    
+
     after_fisheye: List[Tuple[List[List[float]], ndarray]] = []
     for dataset_config in sampled_datasets.values():
         if dataset_config["apply_fisheye"]:
@@ -157,6 +157,7 @@ def sample_datasets(
                 "txt_paths": txt_paths,
                 "apply_sam": "sam" in dataset_config["stages"],
                 "apply_fisheye": "fisheye" in dataset_config["stages"],
+                "splits": dataset_config["splits"].keys(),
             }
 
     return res
@@ -208,6 +209,30 @@ def main() -> int:
     sampled_dict = sample_datasets(
         yaml_data["datasets"], args.datasets_dir_path, args.output_dir_path
     )
+    with open(
+        os.path.join(os.getcwd(), args.output_dir_path, yaml_data["sampled_yaml_file"]),
+        "w",
+    ) as stream:
+        config = {
+            "train": [
+                f"../{key}/train/images"
+                for key, value in sampled_dict.items()
+                if "train" in value["splits"]
+            ],
+            "test": [
+                f"../{key}/test/images"
+                for key, value in sampled_dict.items()
+                if "test" in value["splits"]
+            ],
+            "val": [
+                f"../{key}/valid/images"
+                for key, value in sampled_dict.items()
+                if "valid" in value["splits"]
+            ],
+            "nc": 1,
+            "names": ["person"],
+        }
+        yaml.safe_dump(config, stream)
 
     apply_stages(sampled_dict, yaml_data["fisheye_params"], yaml_data["sam_params"])
 
