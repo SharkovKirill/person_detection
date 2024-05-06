@@ -64,7 +64,7 @@ fisheye_params:
   }
   perspective_params: {
     scale: [0.1, 0.15],
-    p: 0.5,
+    p: 0.2,
     keep_size: True
   }
 
