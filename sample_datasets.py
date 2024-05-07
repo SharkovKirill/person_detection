@@ -1,23 +1,16 @@
 import argparse
-import sys
 import os
 import shutil
-import yaml
+import sys
 import time
-from typing import List, Dict, Any
+from typing import Any, Dict, List
 
-from aug_datasets import aug_bboxes_and_image, all_aug_params
-from segmentation import initialize_sam, segment_one_image
-from utils.vizualize_bboxes import (
-    read_bboxes,
-    read_image,
-    save_image,
-    save_bboxes,
-)
-from segment_anything.modeling import Sam
-
-from numpy import ndarray
+import yaml
 from numpy import random as rd
+
+from aug_datasets import all_aug_params, aug_bboxes_and_image
+from segmentation import initialize_sam, segment_one_image
+from utils.vizualize_bboxes import read_bboxes, read_image, save_bboxes, save_image
 
 
 def create_dirtree_without_files(src: str, dst: str):
@@ -52,10 +45,10 @@ def apply_stages(
             for i in range(0, len(dataset_config["txt_paths"])):
                 bboxes_per_image = read_bboxes(dataset_config["txt_paths"][i])
                 one_image = read_image(dataset_config["image_paths"][i])
-                
-                if len(bboxes_per_image)==0:
+
+                if len(bboxes_per_image) == 0:
                     continue
-                
+
                 if dataset_config["apply_fisheye"]:
                     bboxes_per_image, one_image = aug_bboxes_and_image(
                         bboxes_per_image,
@@ -63,20 +56,22 @@ def apply_stages(
                         aug_options,
                     )
 
-                if len(bboxes_per_image)==0:
+                if len(bboxes_per_image) == 0:
                     continue
-                
+
                 if dataset_config["apply_sam"]:
                     bboxes_per_image, one_image = segment_one_image(
                         sam, one_image, bboxes_per_image
                     )
 
-                if len(bboxes_per_image)==0:
+                if len(bboxes_per_image) == 0:
                     continue
-                
+
                 save_bboxes(bboxes_per_image, dataset_config["txt_paths"][i])
                 save_image(one_image, dataset_config["image_paths"][i])
-            print(f'Augmentation or SAM for {len(dataset_config["image_paths"])} paths took {time.time() - time_before_aug_sam}s')
+            print(
+                f'Augmentation or SAM for {len(dataset_config["image_paths"])} paths took {time.time() - time_before_aug_sam}s'
+            )
 
 
 def sample_datasets(
@@ -214,13 +209,13 @@ def main() -> int:
             "nc": 1,
             "names": ["person"],
             "path": os.path.join(os.getcwd(), args.output_dir_path),
-            #"path": f"../{args.output_dir_path}",
+            # "path": f"../{args.output_dir_path}", ## wsl
         }
         yaml.safe_dump(config, stream)
     time_before_apply_stages = time.time()
-    print('time for copy:', time_before_apply_stages - time_before_sample_datasets)
+    print("time for copy:", time_before_apply_stages - time_before_sample_datasets)
     apply_stages(sampled_dict, yaml_data["fisheye_params"], yaml_data["sam_params"])
-    print('time for aug and SAM:', time.time() - time_before_apply_stages)
+    print("time for aug and SAM:", time.time() - time_before_apply_stages)
     return 0
 
 
