@@ -44,14 +44,15 @@ def aug_bboxes_and_image(
     transformed_image = transformed["image"]
     transformed_bboxes = transformed["bboxes"]  # wrong order
     correct_lines_float = []  # correct order like List[List[x_center, y_center, w, h]]
-    for one_annotation in transformed_bboxes:
-        x_center, y_center, w, h = (
-            one_annotation[0],
-            one_annotation[1],
-            one_annotation[2],
-            one_annotation[3],
-        )
-        correct_lines_float.append([ID_CLASS_PERSON_NEW, x_center, y_center, w, h])
+    if len(transformed_bboxes)>=1:
+        for one_annotation in transformed_bboxes:
+            x_center, y_center, w, h = (
+                one_annotation[0],
+                one_annotation[1],
+                one_annotation[2],
+                one_annotation[3],
+            )
+            correct_lines_float.append([ID_CLASS_PERSON_NEW, x_center, y_center, w, h])
 
     return (
         correct_lines_float,
