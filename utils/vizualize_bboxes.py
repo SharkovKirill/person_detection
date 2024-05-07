@@ -22,8 +22,11 @@ def str_box_to_int_floats(bbox: List[str]):
 
 def read_bboxes(one_label_path: str):
     with open(one_label_path, "r") as bb_file:
-        boxes = bb_file.read().split("\n")
-    bboxes_list = [str_box_to_int_floats(one_box.split(" ")) for one_box in boxes]
+        bboxes = bb_file.read().split("\n")
+    if len(bboxes) >= 1:
+        bboxes_list = [str_box_to_int_floats(one_box.split(" ")) for one_box in bboxes]
+    else:
+        bboxes_list = []
     return bboxes_list
 
 
@@ -35,11 +38,14 @@ def read_image(one_image_path: str):
 
 
 def save_bboxes(bboxes, one_label_path):
-    correct_lines_str = [
-        " ".join(list(map(str, one_box))) for one_box in bboxes
-    ]  # List[f"{ID_CLASS_PERSON_NEW} {x_center} {y_center} {w} {h}"]
+    if len(bboxes) >= 1:
+        correct_lines_str = "\n".join(
+            [" ".join(list(map(str, one_box))) for one_box in bboxes]
+        )  # List[f"{ID_CLASS_PERSON_NEW} {x_center} {y_center} {w} {h}"]
+    else:
+        correct_lines_str = ''
     with open(one_label_path, "w") as file:
-        file.write("\n".join(correct_lines_str))
+        file.write(correct_lines_str)
 
 
 def save_image(image: ndarray, one_image_path: str):

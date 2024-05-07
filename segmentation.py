@@ -80,7 +80,7 @@ def segment_one_image(
     figsize: tuple = None,
     show_plots: bool = False,
 ):
-    ID_CLASS_PERSON_NEW = correct_lines_float[0][0]
+    ID_CLASS_PERSON_NEW = int(correct_lines_float[0][0])
     mask_predictor = SamPredictor(sam)
     mask_predictor.set_image(image_rgb)
     bboxes_one_image = boxes_sam_one_pic(image_rgb, correct_lines_float)
@@ -92,41 +92,42 @@ def segment_one_image(
 
     for one_bbox_aug in bboxes_one_image:
         masks, _, _ = mask_predictor.predict(box=one_bbox_aug, multimask_output=True)
-        if show_plots:
-            box_annotator = sv.BoxAnnotator(color=sv.Color.RED)
-            mask_annotator = sv.MaskAnnotator(
-                color=sv.Color.RED, color_lookup=sv.ColorLookup.INDEX
-            )
+        if not (masks[0] == 0).all(): # если объект нашелся
+            if show_plots:
+                box_annotator = sv.BoxAnnotator(color=sv.Color.RED)
+                mask_annotator = sv.MaskAnnotator(
+                    color=sv.Color.RED, color_lookup=sv.ColorLookup.INDEX
+                )
 
-        detections = sv.Detections(xyxy=sv.mask_to_xyxy(masks=masks), mask=masks)
-        detections = detections[detections.area == np.max(detections.area)]
-        x_center, y_center, w, h = xyxy_to_yolov8(
-            detections.xyxy[0][0],
-            detections.xyxy[0][1],
-            detections.xyxy[0][2],
-            detections.xyxy[0][3],
-            image_rgb.shape[0],
-            image_rgb.shape[1],
-        )
-        new_correct_line = [int(ID_CLASS_PERSON_NEW), x_center, y_center, w, h]
-        correct_new_boxes.append(new_correct_line)
-        if show_plots:
-            masks_all += detections.mask.squeeze()
-
-            source_image = box_annotator.annotate(
-                scene=image_bgr.copy(), detections=detections, skip_label=True
+            detections = sv.Detections(xyxy=sv.mask_to_xyxy(masks=masks), mask=masks)
+            detections = detections[detections.area == np.max(detections.area)]
+            x_center, y_center, w, h = xyxy_to_yolov8(
+                detections.xyxy[0][0],
+                detections.xyxy[0][1],
+                detections.xyxy[0][2],
+                detections.xyxy[0][3],
+                image_rgb.shape[0],
+                image_rgb.shape[1],
             )
-            segmented_image = mask_annotator.annotate(
-                scene=image_bgr.copy(), detections=detections
-            )
+            new_correct_line = [int(ID_CLASS_PERSON_NEW), x_center, y_center, w, h]
+            correct_new_boxes.append(new_correct_line)
+            if show_plots:
+                masks_all += detections.mask.squeeze()
 
-            sv.plot_images_grid(
-                images=[source_image, segmented_image],
-                grid_size=(1, 2),
-                titles=["source image", "segmented image"],
-                size=figsize,
-            )
+                source_image = box_annotator.annotate(
+                    scene=image_bgr.copy(), detections=detections, skip_label=True
+                )
+                segmented_image = mask_annotator.annotate(
+                    scene=image_bgr.copy(), detections=detections
+                )
 
+                sv.plot_images_grid(
+                    images=[source_image, segmented_image],
+                    grid_size=(1, 2),
+                    titles=["source image", "segmented image"],
+                    size=figsize,
+                )
+                
     if show_plots:
         image_to_show = cv2.cvtColor(segmented_image, cv2.COLOR_BGR2RGB)
         red_color = np.array([255, 0, 0], dtype=np.uint8)
