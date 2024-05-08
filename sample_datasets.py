@@ -5,6 +5,8 @@ import sys
 import time
 from typing import Any, Dict, List
 
+from tqdm import tqdm
+
 import yaml
 from numpy import random as rd
 
@@ -17,18 +19,21 @@ def create_dirtree_without_files(src: str, dst: str):
     src = os.path.abspath(src)
     src_prefix = len(src) + len(os.path.sep)
 
-    os.makedirs(dst)
-
+    dirpaths = []
     for root, dirs, _ in os.walk(src):
         for dirname in dirs:
-            dirpath = os.path.join(dst, root[src_prefix:], dirname)
-            os.mkdir(dirpath)
+            dirpaths.append(os.path.join(dst, root[src_prefix:], dirname))
+
+    os.makedirs(dst)
+    for dirpath in dirpaths:
+        os.mkdir(dirpath)
 
 
 def apply_stages(
     sampled_datasets: Dict[str, Dict[str, Any]],
     fisheye_params: Dict[str, Any],
     sam_params: Dict[str, str],
+    output_dir: str
 ) -> None:
     aug_options = all_aug_params.copy()
     for param_name, param_config in fisheye_params.items():
@@ -36,42 +41,47 @@ def apply_stages(
 
     sam = initialize_sam(sam_params["weights_path"], sam_params["model_type"])
 
-    for dataset_config in sampled_datasets.values():
-        if dataset_config["apply_fisheye"] or dataset_config["apply_sam"]:
-            assert len(dataset_config["txt_paths"]) == len(
-                dataset_config["image_paths"]
+    for dataset_name, dataset_config in sampled_datasets.items():
+        assert len(dataset_config["txt_paths"]) == len(dataset_config["image_paths"])
+
+        pbar = tqdm(range(0, len(dataset_config["txt_paths"])))
+        for i in pbar:
+            pbar.set_description(f"{dataset_name}")
+            pbar.set_postfix_str(dataset_config["txt_paths"][i])
+
+            bboxes_per_image = read_bboxes(
+                os.path.join(output_dir, dataset_config["txt_paths"][i])
             )
-            time_before_aug_sam = time.time()
-            for i in range(0, len(dataset_config["txt_paths"])):
-                bboxes_per_image = read_bboxes(dataset_config["txt_paths"][i])
-                one_image = read_image(dataset_config["image_paths"][i])
-
-                if len(bboxes_per_image) == 0:
-                    continue
-
-                if dataset_config["apply_fisheye"]:
-                    bboxes_per_image, one_image = aug_bboxes_and_image(
-                        bboxes_per_image,
-                        one_image,
-                        aug_options,
-                    )
-
-                if len(bboxes_per_image) == 0:
-                    continue
-
-                if dataset_config["apply_sam"]:
-                    bboxes_per_image, one_image = segment_one_image(
-                        sam, one_image, bboxes_per_image
-                    )
-
-                if len(bboxes_per_image) == 0:
-                    continue
-
-                save_bboxes(bboxes_per_image, dataset_config["txt_paths"][i])
-                save_image(one_image, dataset_config["image_paths"][i])
-            print(
-                f'Augmentation or SAM for {len(dataset_config["image_paths"])} paths took {time.time() - time_before_aug_sam}s'
+            one_image = read_image(
+                os.path.join(output_dir, dataset_config["image_paths"][i])
             )
+
+            if len(bboxes_per_image) == 0:
+                continue
+
+            if dataset_config["apply_fisheye"]:
+                bboxes_per_image, one_image = aug_bboxes_and_image(
+                    bboxes_per_image,
+                    one_image,
+                    aug_options,
+                )
+
+            if len(bboxes_per_image) == 0:
+                continue
+
+            if dataset_config["apply_sam"]:
+                bboxes_per_image, one_image = segment_one_image(
+                    sam, one_image, bboxes_per_image
+                )
+
+            if len(bboxes_per_image) == 0:
+                continue
+
+            output_aug_txt = os.path.join(output_dir, "aug", dataset_config["txt_paths"][i])
+            output_aug_image = os.path.join(output_dir, "aug", dataset_config["image_paths"][i])
+
+            save_bboxes(bboxes_per_image, output_aug_txt)
+            save_image(one_image, output_aug_image)
 
 
 def sample_datasets(
@@ -121,13 +131,11 @@ def sample_datasets(
                 ]
 
                 for txt_file in txt_random_sample:
-                    output_dir_path = os.path.join(output_dir, txt_file)
-                    txt_paths.append(output_dir_path)
-                    shutil.copyfile(os.path.join(cwd, txt_file), output_dir_path)
+                    txt_paths.append(txt_file)
+                    shutil.copyfile(os.path.join(cwd, txt_file), os.path.join(output_dir, txt_file))
                 for img_file in sample_name:
-                    output_dir_path = os.path.join(output_dir, img_file)
-                    image_paths.append(output_dir_path)
-                    shutil.copyfile(os.path.join(cwd, img_file), output_dir_path)
+                    image_paths.append(img_file)
+                    shutil.copyfile(os.path.join(cwd, img_file), os.path.join(output_dir, img_file))
 
             res[dataset_name] = {
                 "image_paths": image_paths,
@@ -182,39 +190,84 @@ def main() -> int:
     if os.path.exists(args.output_dir_path):
         shutil.rmtree(args.output_dir_path)
     create_dirtree_without_files(args.datasets_dir_path, args.output_dir_path)
+    create_dirtree_without_files(
+        args.output_dir_path, os.path.join(args.output_dir_path, "aug")
+    )
+
     time_before_sample_datasets = time.time()
+
     sampled_dict = sample_datasets(
         yaml_data["datasets"], args.datasets_dir_path, args.output_dir_path
     )
+
     with open(
         os.path.join(os.getcwd(), args.output_dir_path, yaml_data["sampled_yaml_file"]),
         "w",
     ) as stream:
+        def aug_exist(dataset: Dict[str, Dict[str, Any]]) -> bool:
+            return "apply_sam" in dataset or "apply_fisheye" in dataset
+
+        def split_exist(split: str, splits: Dict[str, Dict[str, Any]]) -> bool:
+            return split in splits
+
+        train = [
+            f"./{key}/train/images"
+            for key, value in sampled_dict.items()
+            if split_exist("train", value["splits"])
+        ]
+        train.extend(
+            [
+                f"./aug/{key}/train/images"
+                for key, value in sampled_dict.items()
+                if split_exist("train", value["splits"]) and aug_exist(value)
+            ]
+        )
+
+        test = [
+            f"./{key}/test/images"
+            for key, value in sampled_dict.items()
+            if split_exist("train", value["splits"])
+        ]
+        test.extend(
+            [
+                f"./aug/{key}/test/images"
+                for key, value in sampled_dict.items()
+                if split_exist("test", value["splits"]) and aug_exist(value)
+            ]
+        )
+
+        val = [
+            f"./{key}/valid/images"
+            for key, value in sampled_dict.items()
+            if split_exist("valid", value["splits"])
+        ]
+        val.extend(
+            [
+                f"./aug/{key}/valid/images"
+                for key, value in sampled_dict.items()
+                if split_exist("valid", value["splits"]) and aug_exist(value)
+            ]
+        )
+
         config = {
-            "train": [
-                f"./{key}/train/images"
-                for key, value in sampled_dict.items()
-                if "train" in value["splits"]
-            ],
-            "test": [
-                f"./{key}/test/images"
-                for key, value in sampled_dict.items()
-                if "test" in value["splits"]
-            ],
-            "val": [
-                f"./{key}/valid/images"
-                for key, value in sampled_dict.items()
-                if "valid" in value["splits"]
-            ],
+            "train": train,
+            "test": test,
+            "val": val,
             "nc": 1,
             "names": ["person"],
             "path": os.path.join(os.getcwd(), args.output_dir_path),
             # "path": f"../{args.output_dir_path}", ## wsl
         }
         yaml.safe_dump(config, stream)
+
     time_before_apply_stages = time.time()
     print("time for copy:", time_before_apply_stages - time_before_sample_datasets)
-    apply_stages(sampled_dict, yaml_data["fisheye_params"], yaml_data["sam_params"])
+    apply_stages(
+        sampled_dict,
+        yaml_data["fisheye_params"],
+        yaml_data["sam_params"],
+        args.output_dir_path,
+    )
     print("time for aug and SAM:", time.time() - time_before_apply_stages)
     return 0
 
