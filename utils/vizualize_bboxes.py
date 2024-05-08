@@ -11,13 +11,10 @@ dir_path_valid = "./Pascal-VOC-2012-1/valid/"
 
 
 def str_box_to_int_floats(bbox: List[str]):
-    return [
-        int(bbox[0]),
-        float(bbox[1]),
-        float(bbox[2]),
-        float(bbox[3]),
-        float(bbox[4]),
-    ]
+    class_id = [int(bbox[0])]
+    bbox_params = list(map(float, bbox[1:]))
+    bbox_params = list(map(lambda x: 1e-5 if x==0 else x, bbox_params))
+    return class_id + bbox_params
 
 
 def read_bboxes(one_label_path: str):
