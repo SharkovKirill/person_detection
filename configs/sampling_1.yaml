@@ -11,8 +11,8 @@ datasets:
   - open-images-v7: {
       splits: {
         train: 10000,
-        valid: 3000,
-        test: 2000,
+        valid: 2000,
+        test: 3000,
       },
       stages: [fisheye, sam]
     }
