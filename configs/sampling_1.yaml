@@ -55,16 +55,16 @@ datasets:
 
 fisheye_params:
   distortion_params: {
-    distort_limit: [2.8, 2.8],
-    shift_limit: [10, 10],
-    p: 0.5
+    distort_limit: [0, 2.8],
+    shift_limit: 0,
+    p: 1
   }
   horizontal_params: {
-    p: 0.5
+    p: 1
   }
   perspective_params: {
     scale: [0.1, 0.15],
-    p: 0.2,
+    p: 1,
     keep_size: True
   }
 
