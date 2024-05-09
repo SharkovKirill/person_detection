@@ -55,7 +55,7 @@ datasets:
 
 fisheye_params:
   distortion_params: {
-    distort_limit: [0, 2.8],
+    distort_limit: [0.5, 2.8],
     shift_limit: 0,
     p: 1
   }
