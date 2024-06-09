@@ -1,9 +1,17 @@
 import json
 import os
 from PIL import Image
+from typing import List
+import shutil
 
 
-def get_coco_from_yolo_full_datasets(datasets: list):
+def get_coco_from_yolo_full_datasets(
+    datasets: List[str],
+    new_dataset_dir: str,
+    copy_images=False,
+):
+    if copy_images:
+        os.makedirs(os.path.join(new_dataset_dir, "images"), exist_ok=True)
     id_img = 1
     categories = [{"id": 1, "name": "person"}]
     coco_dataset = {
@@ -31,6 +39,10 @@ def get_coco_from_yolo_full_datasets(datasets: list):
 
             for image_file in os.listdir(images_path):
                 image_path = os.path.join(images_path, image_file)
+                if copy_images:
+                    shutil.copyfile(
+                        image_path, os.path.join(new_dataset_dir, "images", image_file)
+                    )
                 image = Image.open(image_path)
                 width, height = image.size
                 image_dict = {
@@ -64,11 +76,11 @@ def get_coco_from_yolo_full_datasets(datasets: list):
                     coco_dataset["annotations"].append(ann_dict)
                 id_img += 1
 
-    return coco_dataset
+    with open(os.path.join(new_dataset_dir, "annotations.json"), "w") as f:
+        json.dump(coco_dataset, f)
 
 
-# datasets_paths = ["./datasets", "./sampled_datasets_1"]
-# coco_dataset = get_coco_from_yolo_full_datasets(datasets_paths)
-
-# with open(os.path.join("coco_all_datasets", "annotations.json"), "w") as f:
-#     json.dump(coco_dataset, f)
+datasets_paths = ["./datasets", "./sampled_datasets_1"]
+get_coco_from_yolo_full_datasets(
+    datasets=datasets_paths, new_dataset_dir="./dataset_coco", copy_images=True
+)
