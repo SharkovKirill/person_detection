@@ -1,0 +1,41 @@
+task: detection
+
+num_classes: 1
+remap_mscoco_category: True
+
+train_dataloader: 
+  type: DataLoader
+  dataset: 
+    type: CocoDetection
+    img_folder: ../sampled_datasets_coco_labels/images/
+    ann_file: ../sampled_datasets_coco_labels/annotations/instances_default.json
+    transforms:
+      type: Compose
+      ops: ~ 
+
+  shuffle: True
+  batch_size: 8
+  num_workers: 4
+  drop_last: True
+
+
+val_dataloader:
+  type: DataLoader
+  dataset: 
+    type: CocoDetection
+    img_folder: ../7197photos/images/
+    ann_file: ../7197photos/annotations/instances_default.json
+    transforms:
+      type: Compose
+      ops: ~ 
+
+  shuffle: False
+  batch_size: 8
+  num_workers: 4
+  drop_last: False
+  
+# python tools/train.py -c configs/rtdetr/rtdetr_r18vd_6x_coco.yml # train
+# python tools/train.py -c configs/rtdetr/rtdetr_r101vd_6x_coco.yml # train
+
+# python tools/train.py -c configs/rtdetr/rtdetr_r18vd_6x_coco.yml -r /home/kirill/testing_rt-detr/rtdetr_pytorch/rtdetr_r18vd_5x_coco_objects365_from_paddle.pth --test-only
+# python tools/train.py -c configs/rtdetr/rtdetr_r101vd_6x_coco.yml -r /home/kirill/testing_rt-detr/rtdetr_pytorch/rtdetr_r101vd_6x_coco_from_paddle.pth --test-only
