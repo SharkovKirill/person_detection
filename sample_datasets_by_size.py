@@ -90,6 +90,7 @@ def filter_copy_datasets(
     filter_height = filter_params["height"]
     width_height_together = filter_params["width_height_together"]
     for split_path in dirs_splits_paths:
+        count_filtered_per_dataset = 0
         print(f"Now: {split_path}")
         labels_old_path = os.path.join(datasets_dir_path, split_path, "labels")
         images_old_path = os.path.join(datasets_dir_path, split_path, "images")
@@ -139,6 +140,7 @@ def filter_copy_datasets(
                 if (filter_type == "AtLeastOne" and count_filtered_bboxes > 0) or (
                     filter_type == "Only" and count_filtered_bboxes == count_bboxes
                 ):
+                    count_filtered_per_dataset += 1
                     shutil.copyfile(
                         os.path.join(labels_old_path, label_file_name),
                         os.path.join(labels_new_path, label_file_name),
@@ -147,6 +149,7 @@ def filter_copy_datasets(
                         os.path.join(images_old_path, image_file_name),
                         os.path.join(images_new_path, image_file_name),
                     )  # copy image
+        print(f"Count filtered: {count_filtered_per_dataset}")
     print(f"Count lables with no people: {count_labels_no_people}", dirs_no_people)
 
 
