@@ -5,7 +5,7 @@ import os
 import sys 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
 import argparse
-
+from PIL import Image
 import src.misc.dist as dist 
 from src.core import YAMLConfig 
 from src.solver import TASKS
@@ -15,7 +15,8 @@ def main(args, ) -> None:
     '''main
     '''
     dist.init_distributed()
-
+    Image.MAX_IMAGE_PIXELS = None
+    print(Image.MAX_IMAGE_PIXELS)
     assert not all([args.tuning, args.resume]), \
         'Only support from_scrach or resume or tuning at one time'
 
