@@ -5,9 +5,7 @@ import random
 from typing import List
 import cv2
 from numpy import ndarray
-
-dir_path_train = "./Pascal-VOC-2012-1/train/"
-dir_path_valid = "./Pascal-VOC-2012-1/valid/"
+import pandas as pd
 
 
 def str_box_to_int_floats(bbox: List[str]):
@@ -123,12 +121,20 @@ def save_hists(
         txt_path = os.path.join(dir_path_for_im_and_labels, "labels", file_name_txt)
         with open(txt_path, "r") as txt_file:
             txt_info = txt_file.read().split("\n")
+            if len(txt_info) == 1:
+                continue
             n_people_on_image.append(len(txt_info))
             for bb in txt_info:
                 _, _, _, w_relative, h_relative = list(map(float, bb.split(" ")))
                 w_relative_list.append(w_relative)
                 h_relative_list.append(h_relative)
     print(sum(n_people_on_image) / len(n_people_on_image))
+    
+    to_append = pd.DataFrame(
+        columns=["split", "total_pic", "total_people"],
+    )
+    to_append.loc[dataset_name] = [data_type, len(n_people_on_image), sum(n_people_on_image)]
+
     figure, ax = plt.subplots(nrows=1, ncols=3, figsize=figsize)
     figure.suptitle(f"{dataset_name} {data_type}")
 
@@ -143,6 +149,8 @@ def save_hists(
 
     plt.savefig(f"hists_datasets/{dataset_name}_hist_count_{data_type}_.jpg")
     plt.show()
+    
+    return to_append
 
 
 def show_old_and_new_bb(

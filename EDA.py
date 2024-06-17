@@ -1,4 +1,5 @@
 import os
+import pandas as pd
 
 from utils.vizualize_bboxes import show_bb_yolo, save_hists
 
@@ -11,6 +12,8 @@ DATASETS = (
     ("open-images-v7", ".jpg"),
     ("Person-Detection-Fisheye-1", ".jpg")
 )
+
+DATASET_INFO: pd.DataFrame = pd.DataFrame(columns=["split", "total_pic", "total_people"])
 
 for dataset in DATASETS:
     dataset_name, dataset_image_type = dataset
@@ -30,7 +33,8 @@ for dataset in DATASETS:
             figsize=(40, 20),
             pictures_type=dataset_image_type,
         )
-        # bug with rendering inside the function
-        if dataset_name == "WiderPerson":
-            continue
-        save_hists(dataset_name, os.path.join(dataset_dir, split), split, figsize=(15, 6))
+
+        to_append = save_hists(dataset_name, os.path.join(dataset_dir, split), split, figsize=(15, 6))
+        DATASET_INFO = pd.concat([DATASET_INFO, to_append])
+
+        DATASET_INFO.to_csv("hists_datasets/dataset_info.csv")
