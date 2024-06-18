@@ -1,0 +1,19 @@
+no_people_dir_name: no_people
+clear_output_dir: True
+datasets:
+  - coco-2017
+  - open-images-v7
+  - Pascal-VOC-2012-1
+  - Construction-Site-Safety-30
+  - WiderPerson
+  - Person-Detection-Fisheye-1
+  - Kitti
+  - crowd_human
+  - VisDrone
+
+filter_params: {
+    filter_type: "AtLeastOne", # or Only
+    width_height_together: True, # height and width restrictions must be met simultaneously
+    width: [0, 0.1],
+    height: [0, 0.1],
+  }
