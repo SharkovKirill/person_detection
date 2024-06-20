@@ -2,7 +2,7 @@
 
 DATASET_PATH=$1
 
-CAMERAS_TRAIN=(
+CAMERAS_VALID=(
     "camera_6.3_2024"
     "camera_6.6_2024"
     "camera_2_2024"
@@ -15,15 +15,15 @@ mkdir -p valid/labels/
 mkdir -p train/images/
 mkdir -p train/labels/
 
-for (( i=0; i<${#CAMERAS_TRAIN[@]}; i++ )); do
-    images_to_move="images/${CAMERAS_TRAIN[$i]}*"
-    txt_to_move="labels/${CAMERAS_TRAIN[$i]}*"
-    mv $images_to_move ./train/images/
-    mv $txt_to_move ./train/labels/
+for (( i=0; i<${#CAMERAS_VALID[@]}; i++ )); do
+    images_to_move="images/${CAMERAS_VALID[$i]}*"
+    txt_to_move="labels/${CAMERAS_VALID[$i]}*"
+    mv $images_to_move ./valid/images/
+    mv $txt_to_move ./valid/labels/
 done
 
 
-mv ./images/* ./valid/images/
-mv ./labels/* ./valid/labels/
+mv ./images/* ./train/images/
+mv ./labels/* ./train/labels/
 
 popd
