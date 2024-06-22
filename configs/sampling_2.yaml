@@ -1,0 +1,82 @@
+random_seed: 42
+
+datasets:
+  - coco-2017: {
+      splits: {
+        train: 7655,
+        valid: 1191
+      },
+      stages: [fisheye, sam]
+    }
+  - open-images-v7: {
+      splits: {
+        train: 4675,
+        valid: 927,
+        test: 1648,
+      },
+      stages: [fisheye, sam]
+    }
+  - Pascal-VOC-2012-1: {
+      splits: {
+        train: 2285,
+        valid: 586,
+      },
+      stages: [fisheye, sam]
+    }
+  - Construction-Site-Safety-30: {
+      splits: {
+        train: 196,
+        valid: 34,
+        test: 28
+      },
+      stages: [fisheye, sam]
+    }
+  - WiderPerson: {
+      splits: {
+        train: 6261,
+        valid: 2679,
+      },
+      stages: [fisheye, sam]
+    }
+  - Kitti: {
+      splits: {
+        train: 2463
+      },
+      stages: [fisheye, sam]
+    }
+  - VisDrone: {
+      splits: {
+        train: 5684,
+        valid: 531,
+        test: 1267
+      },
+      stages: [fisheye, sam]
+    }
+  - crowd_human: {
+      splits: {
+        train: 14005,
+        valid: 4073,
+      },
+      stages: [fisheye, sam]
+    }
+
+fisheye_params:
+  distortion_params: {
+    distort_limit: [0.5, 2.8],
+    shift_limit: 0,
+    p: 1
+  }
+  horizontal_params: {
+    p: 1
+  }
+  perspective_params: {
+    scale: [0.1, 0.15],
+    p: 1,
+    keep_size: True
+  }
+
+sam_params:
+  weights_path: sam_weights/sam_vit_h_4b8939.pth
+  model_type: vit_h
+
+sampled_yaml_file: data_yolo8.yaml
