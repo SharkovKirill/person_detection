@@ -37,4 +37,4 @@ for dataset in DATASETS:
         to_append = save_hists(dataset_name, os.path.join(dataset_dir, split), split, figsize=(15, 6))
         DATASET_INFO = pd.concat([DATASET_INFO, to_append])
 
-        DATASET_INFO.to_csv("hists_datasets/dataset_info.csv")
+DATASET_INFO.to_csv("hists_datasets/dataset_info.csv")

@@ -59,6 +59,7 @@ def show_bb_yolo(
     data_type: str = "train",
     figsize=(40, 20),
     pictures_type: str = ".jpg",
+    show_images=False
 ):
     n_pictures_to_show = rows * cols
     figure, ax = plt.subplots(nrows=rows, ncols=cols, figsize=figsize)
@@ -104,7 +105,8 @@ def show_bb_yolo(
     plt.savefig(
         f"bbox_images_examples/{dataset_name}_{data_type}_bboxes_example_{n_pictures_to_show}.jpg"
     )
-    plt.show()
+    if show_images:
+        plt.show()
 
 
 def save_hists(
@@ -112,6 +114,7 @@ def save_hists(
     dir_path_for_im_and_labels: str,
     data_type: str = "train",
     figsize=(40, 20),
+    show_images=False
 ):
     labels_path = os.listdir(os.path.join(dir_path_for_im_and_labels, "labels"))
     n_people_on_image = []
@@ -148,7 +151,8 @@ def save_hists(
     ax.ravel()[2].set_title(f"Средняя относительная ширина человека")
 
     plt.savefig(f"hists_datasets/{dataset_name}_hist_count_{data_type}_.jpg")
-    plt.show()
+    if show_images:
+        plt.show()
     
     return to_append
 
