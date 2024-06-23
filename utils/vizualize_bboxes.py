@@ -19,7 +19,7 @@ def read_bboxes(one_label_path: str):
     with open(one_label_path, "r") as bb_file:
         bboxes = bb_file.read().split("\n")
     if len(bboxes[0]) > 0:
-        bboxes_list = [str_box_to_int_floats(one_box.split(" ")) for one_box in bboxes]
+        bboxes_list = [str_box_to_int_floats(one_box.split(" ")) for one_box in bboxes if len(one_box) > 0]
     elif len(bboxes[0]) == 0:
         bboxes_list = []
     return bboxes_list
