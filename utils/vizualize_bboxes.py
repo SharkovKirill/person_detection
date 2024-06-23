@@ -11,15 +11,20 @@ import pandas as pd
 def str_box_to_int_floats(bbox: List[str]):
     class_id = [int(bbox[0])]
     bbox_params = list(map(float, bbox[1:]))
-    bbox_params = list(map(lambda x: 1e-5 if x==0 else x, bbox_params))
+    bbox_params = list(map(lambda x: 1e-5 if x == 0 else x, bbox_params))
     return class_id + bbox_params
 
 
 def read_bboxes(one_label_path: str):
     with open(one_label_path, "r") as bb_file:
         bboxes = bb_file.read().split("\n")
+    print(bboxes)
     if len(bboxes[0]) > 0:
-        bboxes_list = [str_box_to_int_floats(one_box.split(" ")) for one_box in bboxes]
+        bboxes_list = [
+            str_box_to_int_floats(one_box.split(" "))
+            for one_box in bboxes
+            if len(one_box) > 0
+        ]
     elif len(bboxes[0]) == 0:
         bboxes_list = []
     return bboxes_list
@@ -38,7 +43,7 @@ def save_bboxes(bboxes, one_label_path):
             [" ".join(list(map(str, one_box))) for one_box in bboxes]
         )  # List[f"{ID_CLASS_PERSON_NEW} {x_center} {y_center} {w} {h}"]
     else:
-        correct_lines_str = ''
+        correct_lines_str = ""
     with open(one_label_path, "w") as file:
         file.write(correct_lines_str)
 
@@ -59,7 +64,7 @@ def show_bb_yolo(
     data_type: str = "train",
     figsize=(40, 20),
     pictures_type: str = ".jpg",
-    show_images=False
+    show_images=False,
 ):
     n_pictures_to_show = rows * cols
     figure, ax = plt.subplots(nrows=rows, ncols=cols, figsize=figsize)
@@ -114,7 +119,7 @@ def save_hists(
     dir_path_for_im_and_labels: str,
     data_type: str = "train",
     figsize=(40, 20),
-    show_images=False
+    show_images=False,
 ):
     labels_path = os.listdir(os.path.join(dir_path_for_im_and_labels, "labels"))
     n_people_on_image = []
@@ -132,11 +137,15 @@ def save_hists(
                 w_relative_list.append(w_relative)
                 h_relative_list.append(h_relative)
     print(sum(n_people_on_image) / len(n_people_on_image))
-    
+
     to_append = pd.DataFrame(
         columns=["split", "total_pic", "total_people"],
     )
-    to_append.loc[dataset_name] = [data_type, len(n_people_on_image), sum(n_people_on_image)]
+    to_append.loc[dataset_name] = [
+        data_type,
+        len(n_people_on_image),
+        sum(n_people_on_image),
+    ]
 
     figure, ax = plt.subplots(nrows=1, ncols=3, figsize=figsize)
     figure.suptitle(f"{dataset_name} {data_type}")
@@ -153,7 +162,7 @@ def save_hists(
     plt.savefig(f"hists_datasets/{dataset_name}_hist_count_{data_type}_.jpg")
     if show_images:
         plt.show()
-    
+
     return to_append
 
 
