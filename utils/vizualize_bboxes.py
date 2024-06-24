@@ -79,8 +79,7 @@ def show_bb_yolo(
             file_name_txt.rstrip(".txt") + pictures_type,
         )
         print(i + 1, txt_path)
-        with open(txt_path, "r") as txt_file:
-            txt_info = txt_file.read().split("\n")
+        txt_info = read_bboxes(txt_path)
         image = plt.imread(img_path)
         if len(image.shape) == 3:
             height, width, channels = image.shape  # height - высота, width - ширина
@@ -92,9 +91,7 @@ def show_bb_yolo(
         ax.ravel()[i].set_axis_off()
 
         for bb in txt_info:
-            class_id, x_relative, y_relative, w_relative, h_relative = list(
-                map(float, bb.split(" "))
-            )
+            class_id, x_relative, y_relative, w_relative, h_relative = bb
             x_center = int(x_relative * width)
             y_center = int(y_relative * height)
             w = int(w_relative * width)
@@ -127,15 +124,14 @@ def save_hists(
     h_relative_list = []
     for i, file_name_txt in enumerate(labels_path):
         txt_path = os.path.join(dir_path_for_im_and_labels, "labels", file_name_txt)
-        with open(txt_path, "r") as txt_file:
-            txt_info = txt_file.read().split("\n")
-            if len(txt_info) == 1:
-                continue
-            n_people_on_image.append(len(txt_info))
-            for bb in txt_info:
-                _, _, _, w_relative, h_relative = list(map(float, bb.split(" ")))
-                w_relative_list.append(w_relative)
-                h_relative_list.append(h_relative)
+        txt_info = read_bboxes(txt_path)
+        if len(txt_info) == 0:
+            continue
+        n_people_on_image.append(len(txt_info))
+        for bb in txt_info:
+            _, _, _, w_relative, h_relative = bb
+            w_relative_list.append(w_relative)
+            h_relative_list.append(h_relative)
     print(sum(n_people_on_image) / len(n_people_on_image))
 
     to_append = pd.DataFrame(

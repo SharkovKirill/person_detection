@@ -10,7 +10,9 @@ DATASETS = (
     ("WiderPerson", ".jpg"),
     ("Construction-Site-Safety-30", ".jpg"),
     ("open-images-v7", ".jpg"),
-    ("Person-Detection-Fisheye-1", ".jpg")
+    ("Person-Detection-Fisheye-1", ".jpg"),
+    # ("crowd_human", ".jpg"),
+    # ("VisDrone", ".jpg"),
 )
 
 DATASET_INFO: pd.DataFrame = pd.DataFrame(columns=["split", "total_pic", "total_people"])
